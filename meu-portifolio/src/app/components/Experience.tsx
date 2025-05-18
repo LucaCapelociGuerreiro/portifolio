@@ -17,8 +17,8 @@ const Experience = () => {
       technologies: ['React', 'Node.js', 'Express', 'MongoDB']
     },
     {
-      role: 'Junior Web Developer',
-      company: 'Creative Web Studio',
+      role: 'Desenvolvedor Junior',
+      company: 'Banese',
       period: 'Jun 2017 - Feb 2019',
       description: 'Built dynamic websites and implemented e-commerce solutions. Worked with LAMP stack and migrated legacy projects to modern frameworks.',
       technologies: ['JavaScript', 'PHP', 'MySQL', 'WordPress']

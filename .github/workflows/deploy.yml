@@ -1,0 +1,51 @@
+name: Deploy to Oracle Cloud
+
+on:
+  push:
+    branches: [ "main" ]  # Dispara apenas no push para main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Passo 1: Baixar o código
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Passo 2: Configurar acesso SSH
+    - name: Add SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+    # Passo 3: Deploy no servidor
+    - name: Execute deployment
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
+          # Atualiza o código
+          cd ~/portifolio/meu-portifolio
+          git pull origin main
+          
+          # Constrói a nova imagem Docker
+          sudo docker build -t portfolio .
+          
+          # Remove o container antigo se existir
+          sudo docker stop meu-portfolio || true
+          sudo docker rm meu-portfolio || true
+          
+          # Inicia o novo container
+          sudo docker run -d \
+            -p 127.0.0.1:3000:3000 \
+            --name meu-portfolio \
+            --restart always \
+            portfolio
+          
+          # Atualiza o Nginx
+          sudo nginx -t && sudo systemctl restart nginx
+          
+          # Limpa imagens antigas
+          sudo docker image prune -af
+        "
+        

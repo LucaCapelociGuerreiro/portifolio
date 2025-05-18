@@ -4,10 +4,15 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'pt';
 
+interface TranslationOptions {
+  defaultValue?: string;
+  [key: string]: string | undefined;
+}
+
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string, options?: Record<string, any>) => string;
+  t: (key: string, options?: TranslationOptions) => string;
 }
 
 const translations = {
@@ -130,7 +135,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
-  const t = (key: string, options?: Record<string, any>): string => {
+  const t = (key: string, options?: TranslationOptions): string => {
     const translation = translations[language][key as keyof typeof translations[typeof language]];
     
     if (!translation && options?.defaultValue) {

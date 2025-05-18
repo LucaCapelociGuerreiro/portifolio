@@ -71,7 +71,7 @@ const skillCategories = [
 ];
 
 // Componente para exibir a barra de progresso animada
-const SkillProgressBar = ({ name, level, logo }: { name: string, level: number, logo: string }) => {
+const SkillProgressBar = ({ name, logo }: { name: string, logo: string }) => {
   return (
     <div className="mb-4">
       <div className="flex items-center">
@@ -151,7 +151,6 @@ const Skills = () => {
                   <SkillProgressBar
                     key={skill.name}
                     name={skill.name}
-                    level={skill.level}
                     logo={skill.logo}
                   />
                 ))}

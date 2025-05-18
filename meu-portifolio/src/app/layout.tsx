@@ -6,22 +6,22 @@ import { LanguageProvider } from './context/LanguageContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Luca Capeloci Guerreiro | Solutions Architect',
+  title: 'Luca.cloud | Solutions Architect',
   description: 'Solutions Architect specializing in DevOps and Cloud. Experienced in AWS, Azure, and modern cloud technologies.',
   keywords: ['Solutions Architect', 'DevOps', 'Cloud', 'AWS', 'Azure', 'Infrastructure as Code', 'CI/CD', 'Kubernetes'],
-  authors: [{ name: 'Luca Capeloci Guerreiro' }],
-  creator: 'Luca Capeloci Guerreiro',
+  authors: [{ name: 'Luca' }],
+  creator: 'Luca',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://lucaguerreiro.com',
-    title: 'Luca Capeloci Guerreiro | Solutions Architect',
+    url: 'https://luca.cloud',
+    title: 'Luca.cloud | Solutions Architect',
     description: 'Solutions Architect specializing in DevOps and Cloud. Experienced in AWS, Azure, and modern cloud technologies.',
-    siteName: 'Luca Capeloci Guerreiro Portfolio',
+    siteName: 'Luca.cloud',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Luca Capeloci Guerreiro | Solutions Architect',
+    title: 'Luca.cloud | Solutions Architect',
     description: 'Solutions Architect specializing in DevOps and Cloud. Experienced in AWS, Azure, and modern cloud technologies.',
   },
   robots: {

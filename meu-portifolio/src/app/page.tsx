@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Projects from './components/Projects';
 import Certifications from './components/Certifications';
+import Education from './components/Education';
 import { useLanguage } from './context/LanguageContext';
 
 export default function Home() {
@@ -22,6 +23,9 @@ export default function Home() {
       <Projects />
       <Certifications />
 
+      {/* Education Section */}
+      <Education />
+
       {/* Experience Section */}
       <Experience />
 
@@ -29,20 +33,10 @@ export default function Home() {
       <Contact />
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-900 py-8 border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-600 dark:text-gray-400">
-            © {new Date().getFullYear()} Luca Capeloci Guerreiro. {t('footer.rights')}
-          </p>
-          <div className="flex justify-center space-x-6 mt-4">
-            <a href="https://github.com/seu-usuario" className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-              GitHub
-            </a>
-            <a href="https://linkedin.com/in/seu-perfil" className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-              LinkedIn
-            </a>
-          </div>
-        </div>
+      <footer className="py-6 bg-gray-900 text-center text-white">
+        <p className="text-sm">
+          © {new Date().getFullYear()} Luca<span className="text-blue-400">.cloud</span>. {t('footer.rights')}
+        </p>
       </footer>
     </main>
   );

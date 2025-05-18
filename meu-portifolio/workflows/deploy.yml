@@ -1,0 +1,77 @@
+name: Deploy to Oracle Cloud
+
+on:
+  push:
+    branches: [ "main" ]  # Dispara apenas no push para main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Passo 1: Baixar o código
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Passo 2: Configurar acesso SSH
+    - name: Add SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+    # Passo 3: Deploy no servidor
+    - name: Execute deployment
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
+          # Atualiza o código
+          cd ~/portifolio/meu-portifolio
+          git pull origin main
+          
+          # Constrói a nova imagem Docker
+          sudo docker build -t portfolio .
+          
+          # Remove o container antigo se existir
+          sudo docker stop meu-portfolio || true
+          sudo docker rm meu-portfolio || true
+          
+          # Inicia o novo container
+          sudo docker run -d \
+            -p 127.0.0.1:3000:3000 \
+            --name meu-portfolio \
+            --restart always \
+            portfolio
+          
+          # Atualiza o Nginx
+          sudo nginx -t && sudo systemctl restart nginx
+          
+          # Limpa imagens antigas
+          sudo docker image prune -af
+        "
+        
+    # Passo 4: Notificação (opcional)
+    - name: Slack Notification
+      if: success()
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_COLOR: good
+        SLACK_TITLE: 'Deploy concluído'
+        SLACK_MESSAGE: 'Portfólio atualizado em https://lucaguerreiro.cloud'
+
+- name: Send Email Notification
+  uses: dawidd6/action-send-mail@v3
+  with:
+    server_address: smtp.gmail.com  # Ou seu servidor SMTP
+    server_port: 465
+    username: ${{ secrets.EMAIL_USERNAME }}
+    password: ${{ secrets.EMAIL_PASSWORD }}
+    subject: "Deploy concluído - lucaguerreiro.cloud"
+    body: |
+      O deploy do portfólio foi concluído com sucesso!
+      Data: ${{ github.event.head_commit.timestamp }}
+      Commit: ${{ github.sha }}
+      URL: https://lucaguerreiro.cloud
+    to: lucacguerreiro@gmail.com # E-mail destinatário
+    from: GitHub Actions <notificacoes@exemplo.com>
+    content_type: text/plain

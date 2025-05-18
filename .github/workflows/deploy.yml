@@ -98,27 +98,53 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
       
-      - name: Deploy to server
+      - name: Update code on server
         run: |
+          # Configurando SSH para evitar timeouts
+          mkdir -p ~/.ssh
+          echo "Host *" >> ~/.ssh/config
+          echo "  ServerAliveInterval 60" >> ~/.ssh/config
+          echo "  ServerAliveCountMax 10" >> ~/.ssh/config
+          
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
             # Atualiza o código
             cd ~/portifolio/meu-portifolio
             git fetch --all
             git reset --hard origin/${GITHUB_REF#refs/heads/}
             
-            # Criando timestamp primeiro como uma variável separada e verificando
+            # Criando timestamp primeiro como uma variável separada
             TS=\$(date +%s)
             echo \"Using build timestamp: \$TS\"
+          "
+      
+      - name: Build Docker image
+        timeout-minutes: 20
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 ubuntu@${{ secrets.SERVER_IP }} "
+            cd ~/portifolio/meu-portifolio
             
-            # Constrói a nova imagem Docker com timestamp único
+            # Obtendo timestamp novamente para consistência
+            TS=\$(date +%s)
+            
+            # Construindo a imagem com opções para aumentar a velocidade
+            echo \"Building Docker image with tag: portfolio:\$TS\"
             sudo docker buildx build --no-cache \
+              --build-arg BUILD_TIME=\$TS \
               -t portfolio:\$TS -t portfolio:latest .
-            
+          "
+      
+      - name: Deploy container
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 ubuntu@${{ secrets.SERVER_IP }} "
             # Remove o container antigo se existir
             sudo docker stop meu-portfolio || true
             sudo docker rm meu-portfolio || true
             
+            # Obtendo timestamp para consistência nos logs
+            TS=\$(date +%s)
+            
             # Inicia o novo container com healthcheck
+            echo \"Starting container with build time: \$TS\"
             sudo docker run -d \
               -p 127.0.0.1:3000:3000 \
               --name meu-portfolio \
@@ -129,15 +155,21 @@ jobs:
               --health-retries=3 \
               portfolio:latest
             
-            # Verifica se a aplicação está online
-            timeout 60s bash -c 'until sudo docker ps | grep meu-portfolio | grep -q healthy; do sleep 5; done'
+            # Verifica se a aplicação está online (com timeout menor)
+            echo \"Verificando status do container...\"
+            timeout 30s bash -c 'until sudo docker ps | grep meu-portfolio | grep -q healthy; do echo \"Aguardando container estar healthy...\"; sleep 3; done'
             
             # Limpa o cache do NGINX 
             sudo rm -rf /var/cache/nginx/*
             
             # Atualiza o Nginx e verifica configuração
             sudo nginx -t && sudo systemctl restart nginx
-            
+          "
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
             # Limpa imagens antigas mantendo as 3 mais recentes
             sudo docker image ls --format '{{.Repository}}:{{.Tag}}' | grep portfolio | grep -v latest | sort -r | tail -n +4 | xargs -r sudo docker rmi
           "

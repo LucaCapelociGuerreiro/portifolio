@@ -1,12 +1,172 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import Image from 'next/image';
 import { Cloud, Server, Database, Shield } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useEffect, useRef, useState } from 'react';
+
+// Componente de efeito Blob para o fundo
+const BlobEffect = ({ mouseX, mouseY }) => {
+  // Transformações para os blobs
+  const xBlob1 = useTransform(mouseX, [-500, 500], [-30, 30]);
+  const yBlob1 = useTransform(mouseY, [-500, 500], [-30, 30]);
+  
+  const xBlob2 = useTransform(mouseX, [-500, 500], [20, -20]);
+  const yBlob2 = useTransform(mouseY, [-500, 500], [20, -20]);
+  
+  const xBlob3 = useTransform(mouseX, [-500, 500], [-10, 10]);
+  const yBlob3 = useTransform(mouseY, [-500, 500], [-10, 10]);
+  
+  // Spring para movimento mais fluido
+  const springX1 = useSpring(xBlob1, { damping: 30, stiffness: 90 });
+  const springY1 = useSpring(yBlob1, { damping: 30, stiffness: 90 });
+  
+  const springX2 = useSpring(xBlob2, { damping: 25, stiffness: 100 });
+  const springY2 = useSpring(yBlob2, { damping: 25, stiffness: 100 });
+  
+  const springX3 = useSpring(xBlob3, { damping: 35, stiffness: 80 });
+  const springY3 = useSpring(yBlob3, { damping: 35, stiffness: 80 });
+
+  return (
+    <div className="parallax-bg">
+      {/* Elemento blob 1 */}
+      <motion.div
+        className="blob-effect"
+        style={{
+          x: springX1,
+          y: springY1,
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0) 70%)',
+          width: '80%',
+          height: '80%',
+          top: '-20%',
+          left: '-10%'
+        }}
+      />
+      
+      {/* Elemento blob 2 */}
+      <motion.div
+        className="blob-effect"
+        style={{
+          x: springX2,
+          y: springY2,
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%)',
+          width: '70%',
+          height: '70%',
+          bottom: '-10%',
+          right: '-10%'
+        }}
+      />
+      
+      {/* Elemento blob 3 */}
+      <motion.div
+        className="blob-effect"
+        style={{
+          x: springX3,
+          y: springY3,
+          background: 'radial-gradient(circle, rgba(147, 197, 253, 0.10) 0%, rgba(147, 197, 253, 0) 70%)',
+          width: '50%',
+          height: '50%',
+          top: '30%',
+          left: '20%'
+        }}
+      />
+      
+      {/* Camada de distorção */}
+      <div className="distortion-layer" />
+    </div>
+  );
+};
+
+const ProfileImage = ({ springImgX, springImgY }) => {
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
+  const imgRef = useRef(null);
+  
+  const handleMouseMove = (e) => {
+    if (imgRef.current) {
+      const rect = imgRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      setMousePosition({ x, y });
+    }
+  };
+  
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img) {
+      img.addEventListener('mousemove', handleMouseMove);
+      return () => {
+        img.removeEventListener('mousemove', handleMouseMove);
+      };
+    }
+  }, []);
+  
+  return (
+    <motion.div 
+      className="relative w-72 h-72 mx-auto profile-parallax"
+      style={{
+        x: springImgX,
+        y: springImgY
+      }}
+      whileHover={{ scale: 1.05 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <div 
+        ref={imgRef}
+        className="profile-img-container"
+        style={{ 
+          '--x': `${mousePosition.x * 100}%`,
+          '--y': `${mousePosition.y * 100}%`
+        } as React.CSSProperties}
+      >
+        <div 
+          className="profile-img-overlay"
+          style={{ 
+            opacity: 1,
+            '--x': `${mousePosition.x * 100}%`,
+            '--y': `${mousePosition.y * 100}%`
+          } as React.CSSProperties}
+        />
+        <Image
+          src="/images/profile.jpg"
+          alt="Luca Guerreiro - Solutions Architect"
+          fill
+          className="rounded-full object-cover"
+          priority
+        />
+      </div>
+    </motion.div>
+  );
+};
 
 const Hero = () => {
   const { t } = useLanguage();
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  // Transformações para a imagem de perfil
+  const imgX = useTransform(mouseX, [-500, 500], [-5, 5]);
+  const imgY = useTransform(mouseY, [-500, 500], [-5, 5]);
+  
+  // Adiciona spring para movimento mais suave
+  const springImgX = useSpring(imgX, { damping: 25, stiffness: 100 });
+  const springImgY = useSpring(imgY, { damping: 25, stiffness: 100 });
+
+  // Manipulador de evento de mouse
+  const handleMouseMove = (e: MouseEvent) => {
+    // Calcula a posição do mouse relativa ao centro da tela
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    mouseX.set(e.clientX - centerX);
+    mouseY.set(e.clientY - centerY);
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -30,12 +190,15 @@ const Hero = () => {
   };
 
   return (
-    <section id="home" className="min-h-screen flex items-center justify-center py-20">
+    <section id="home" className="min-h-screen flex items-center justify-center py-20 relative overflow-hidden">
+      {/* Efeito de blob para o fundo */}
+      <BlobEffect mouseX={mouseX} mouseY={mouseY} />
+      
       <motion.div 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center relative z-10"
       >
         <div className="flex-1 text-center md:text-left">
           <motion.h1 
@@ -113,19 +276,7 @@ const Hero = () => {
           variants={itemVariants}
           className="flex-1 mt-12 md:mt-0"
         >
-          <motion.div 
-            className="relative w-72 h-72 mx-auto"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Image
-              src="/images/profile.jpg"
-              alt="Luca Guerreiro - Solutions Architect"
-              fill
-              className="rounded-full object-cover shadow-2xl"
-              priority
-            />
-          </motion.div>
+          <ProfileImage springImgX={springImgX} springImgY={springImgY} />
         </motion.div>
       </motion.div>
     </section>

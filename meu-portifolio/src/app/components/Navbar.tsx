@@ -36,7 +36,7 @@ const Navbar = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="px-3 py-2 rounded-md text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="nav-item text-sm font-medium"
                 >
                   {item.label}
                 </Link>
@@ -70,7 +70,7 @@ const Navbar = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-3 py-2 rounded-md text-base font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="nav-item block text-base font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}

@@ -18,13 +18,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
           cache-dependency-path: meu-portifolio/package-lock.json
       
       - name: Install dependencies
         working-directory: meu-portifolio
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Lint
         working-directory: meu-portifolio
@@ -48,13 +48,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
           cache-dependency-path: meu-portifolio/package-lock.json
       
       - name: Install dependencies
         working-directory: meu-portifolio
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Build Next.js app
         working-directory: meu-portifolio

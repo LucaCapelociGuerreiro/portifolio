@@ -4,6 +4,10 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+# Definindo variáveis de ambiente para build
+ARG BUILD_TIME=unknown
+ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
+
 # Copy package files
 COPY package.json package-lock.json ./
 
@@ -24,6 +28,10 @@ WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
+
+# Passando variáveis de tempo de build para a imagem final
+ARG BUILD_TIME=unknown
+ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs

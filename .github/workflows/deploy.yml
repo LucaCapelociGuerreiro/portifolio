@@ -2,50 +2,142 @@ name: Deploy to Oracle Cloud
 
 on:
   push:
-    branches: [ "main" ]  # Dispara apenas no push para main
-
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    
 jobs:
-  build-and-deploy:
+  lint-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
     
     steps:
-    # Passo 1: Baixar o código
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    # Passo 2: Configurar acesso SSH
-    - name: Add SSH Key
-      uses: shimataro/ssh-key-action@v2
-      with:
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: ${{ secrets.KNOWN_HOSTS }}
-
-    # Passo 3: Deploy no servidor
-    - name: Execute deployment
-      run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
-          # Atualiza o código
-          cd ~/portifolio/meu-portifolio
-          git pull origin main
-          
-          # Constrói a nova imagem Docker
-          sudo docker build -t portfolio .
-          
-          # Remove o container antigo se existir
-          sudo docker stop meu-portfolio || true
-          sudo docker rm meu-portfolio || true
-          
-          # Inicia o novo container
-          sudo docker run -d \
-            -p 127.0.0.1:3000:3000 \
-            --name meu-portfolio \
-            --restart always \
-            portfolio
-          
-          # Atualiza o Nginx
-          sudo nginx -t && sudo systemctl restart nginx
-          
-          # Limpa imagens antigas
-          sudo docker image prune -af
-        "
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: meu-portifolio/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: meu-portifolio
+        run: npm ci
+      
+      - name: Lint
+        working-directory: meu-portifolio
+        run: npm run lint
+      
+      # Adicione este passo quando tiver testes
+      # - name: Test
+      #   working-directory: meu-portifolio
+      #   run: npm test
+  
+  build:
+    name: Build
+    needs: lint-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: meu-portifolio/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: meu-portifolio
+        run: npm ci
+      
+      - name: Build Next.js app
+        working-directory: meu-portifolio
+        run: npm run build
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: next-build
+          path: |
+            meu-portifolio/.next
+            meu-portifolio/public
+          retention-days: 1
+  
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: next-build
+          path: meu-portifolio
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Add SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
+            # Atualiza o código
+            cd ~/portifolio/meu-portifolio
+            git pull origin main
+            
+            # Constrói a nova imagem Docker com cache otimizado
+            sudo docker buildx build --cache-from=type=local,src=/var/lib/docker/buildx-cache \
+              --cache-to=type=local,dest=/var/lib/docker/buildx-cache,mode=max \
+              -t portfolio:$(date +%s) -t portfolio:latest .
+            
+            # Remove o container antigo se existir
+            sudo docker stop meu-portfolio || true
+            sudo docker rm meu-portfolio || true
+            
+            # Inicia o novo container com healthcheck
+            sudo docker run -d \
+              -p 127.0.0.1:3000:3000 \
+              --name meu-portfolio \
+              --restart always \
+              --health-cmd='wget --spider http://localhost:3000 || exit 1' \
+              --health-interval=30s \
+              --health-retries=3 \
+              portfolio:latest
+            
+            # Verifica se a aplicação está online
+            timeout 60s bash -c 'until sudo docker ps | grep meu-portfolio | grep -q healthy; do sleep 5; done'
+            
+            # Atualiza o Nginx e verifica configuração
+            sudo nginx -t && sudo systemctl restart nginx
+            
+            # Limpa imagens antigas mantendo as 3 mais recentes
+            sudo docker image ls --format '{{.Repository}}:{{.Tag}}' | grep portfolio | grep -v latest | sort -r | tail -n +4 | xargs -r sudo docker rmi
+          "
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Deployment completed successfully!"
+            # Adicione notificações como Slack, Discord, etc.
+          else
+            echo "Deployment failed!"
+            # Adicione notificações de falha
+          fi
         

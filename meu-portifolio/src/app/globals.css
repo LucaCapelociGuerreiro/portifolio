@@ -75,3 +75,130 @@ button:hover {
     @apply text-3xl sm:text-4xl font-bold;
   }
 }
+
+/* Efeito de foco criativo do menu */
+.nav-item {
+  position: relative;
+  padding: 0.5rem 1rem;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  overflow: hidden;
+}
+
+.nav-item:before,
+.nav-item:after {
+  content: '';
+  position: absolute;
+  transition: transform 0.3s ease;
+}
+
+.nav-item:before {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transform: translateX(-101%);
+}
+
+.nav-item:after {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 123, 255, 0.1);
+  transform: scale(0, 1);
+  transform-origin: right top;
+  z-index: -1;
+}
+
+.nav-item:hover:before {
+  transform: translateX(0);
+}
+
+.nav-item:hover:after {
+  transform: scale(1, 1);
+  transform-origin: left top;
+}
+
+/* Versão dark mode */
+.dark .nav-item:after {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* Efeitos de parallax e distorção para o Hero */
+.parallax-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.distortion-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  backdrop-filter: blur(0px);
+  transition: backdrop-filter 0.5s ease;
+}
+
+.distortion-layer:hover {
+  backdrop-filter: blur(0px);
+}
+
+.blob-effect {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  transition: transform 0.8s cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+.profile-parallax {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  will-change: transform;
+}
+
+.profile-img-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.profile-img-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.2) 0%,
+    rgba(147, 197, 253, 0.1) 50%,
+    rgba(59, 130, 246, 0) 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+
+.profile-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--x, 50%) var(--y, 50%),
+    rgba(59, 130, 246, 0.2) 0%,
+    rgba(59, 130, 246, 0) 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2;
+  pointer-events: none;
+}

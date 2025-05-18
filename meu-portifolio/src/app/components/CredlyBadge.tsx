@@ -23,7 +23,9 @@ const CredlyBadge = ({ badgeId, width = 120, height = 120 }: CredlyBadgeProps) =
         }
         
         // Força o Credly a renderizar novamente
-        window._credly.render_badge && window._credly.render_badge();
+        if (window._credly.render_badge) {
+          window._credly.render_badge();
+        }
         setLoaded(true);
       }
     };

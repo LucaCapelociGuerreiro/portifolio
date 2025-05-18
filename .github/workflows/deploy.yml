@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    types: [closed]
     
 jobs:
   lint-test:
@@ -39,7 +40,7 @@ jobs:
     name: Build
     needs: lint-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     
     steps:
       - name: Checkout repository
@@ -73,7 +74,7 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
     
     steps:
       - name: Checkout repository
@@ -99,7 +100,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} "
             # Atualiza o código
             cd ~/portifolio/meu-portifolio
-            git pull origin main
+            git pull origin ${GITHUB_REF#refs/heads/}
             
             # Constrói a nova imagem Docker com cache otimizado
             sudo docker buildx build --cache-from=type=local,src=/var/lib/docker/buildx-cache \

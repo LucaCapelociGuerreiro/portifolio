@@ -49,29 +49,3 @@ jobs:
           sudo docker image prune -af
         "
         
-    # Passo 4: Notificação (opcional)
-    - name: Slack Notification
-      if: success()
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_COLOR: good
-        SLACK_TITLE: 'Deploy concluído'
-        SLACK_MESSAGE: 'Portfólio atualizado em https://lucaguerreiro.cloud'
-
-- name: Send Email Notification
-  uses: dawidd6/action-send-mail@v3
-  with:
-    server_address: smtp.gmail.com  # Ou seu servidor SMTP
-    server_port: 465
-    username: ${{ secrets.EMAIL_USERNAME }}
-    password: ${{ secrets.EMAIL_PASSWORD }}
-    subject: "Deploy concluído - lucaguerreiro.cloud"
-    body: |
-      O deploy do portfólio foi concluído com sucesso!
-      Data: ${{ github.event.head_commit.timestamp }}
-      Commit: ${{ github.sha }}
-      URL: https://lucaguerreiro.cloud
-    to: lucacguerreiro@gmail.com # E-mail destinatário
-    from: GitHub Actions <notificacoes@exemplo.com>
-    content_type: text/plain

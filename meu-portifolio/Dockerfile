@@ -12,7 +12,7 @@ ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy all files
 COPY . .

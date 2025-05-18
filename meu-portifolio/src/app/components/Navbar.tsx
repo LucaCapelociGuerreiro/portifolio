@@ -16,6 +16,7 @@ const Navbar = () => {
     { href: '#projects', label: t('nav.projects') },
     { href: '#skills', label: t('nav.skills') },
     { href: '#certifications', label: t('nav.certifications') },
+    { href: '#education', label: t('nav.education') },
     { href: '#contact', label: t('nav.contact') },
   ];
 
@@ -24,8 +25,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold">
-              Portfólio
+            <Link href="/" className="text-xl font-bold flex items-center">
+              <span className="text-gray-900 dark:text-white">Luca</span>
+              <span className="text-blue-600 dark:text-blue-400">.cloud</span>
             </Link>
           </div>
           

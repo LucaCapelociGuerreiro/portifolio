@@ -6,6 +6,10 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-gray-200: #e5e7eb;
+  --color-gray-700: #374151;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -201,4 +205,43 @@ button:hover {
   transition: opacity 0.3s ease;
   z-index: 2;
   pointer-events: none;
+}
+
+/* Estilos de scrollbar personalizada */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--color-gray-200);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-blue-500);
+  border-radius: 3px;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--color-gray-700);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-blue-600);
+}
+
+/* Estilos para o carrossel Embla */
+.embla {
+  overflow: hidden;
+}
+
+.embla__container {
+  display: flex;
+}
+
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  position: relative;
 }

@@ -7,7 +7,7 @@ type Language = 'en' | 'pt';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, any>) => string;
 }
 
 const translations = {
@@ -30,12 +30,23 @@ const translations = {
     // Certifications
     'certifications.title': 'Certifications',
     'certifications.subtitle': 'Professional qualifications and certifications',
+    'certifications.count': 'Verified Certifications',
 
     // Projects
     'projects.title': 'Projects',
     'projects.subtitle': 'Some of my recent work and case studies',
     'projects.viewLive': 'View Live',
     'projects.viewCode': 'View Code',
+
+    // Education
+    'education.title': 'Education',
+    'education.subtitle': 'Academic background and qualifications',
+    'education.bachelorDegree': 'Bachelor\'s Degree',
+    'education.computerScience': 'Computer Science',
+    'education.institution': 'University',
+    'education.location': 'Location',
+    'education.period': '2016 - 2020',
+    'education.description': 'Graduated with a Bachelor\'s degree in Computer Science, focusing on software development, algorithms, and data structures.',
 
     // Contact
     'contact.title': 'Get in Touch',
@@ -54,6 +65,7 @@ const translations = {
     'nav.skills': 'Skills',
     'nav.contact': 'Contact',
     'nav.certifications': 'Certifications',
+    'nav.education': 'Education',
   },
   pt: {
     // Hero Section
@@ -74,12 +86,23 @@ const translations = {
     // Certifications
     'certifications.title': 'Certificações',
     'certifications.subtitle': 'Qualificações e certificações profissionais',
+    'certifications.count': 'Certificações Verificadas',
 
     // Projects
     'projects.title': 'Projetos',
     'projects.subtitle': 'Alguns dos meus trabalhos recentes e estudos de caso',
     'projects.viewLive': 'Ver Demo',
     'projects.viewCode': 'Ver Código',
+
+    // Education
+    'education.title': 'Formação Acadêmica',
+    'education.subtitle': 'Minha formação e qualificações acadêmicas',
+    'education.bachelorDegree': 'Bacharelado',
+    'education.computerScience': 'Ciências da Computação',
+    'education.institution': 'Universidade',
+    'education.location': 'Brasil',
+    'education.period': '2016 - 2020',
+    'education.description': 'Formado em Bacharelado em Ciências da Computação, com foco em desenvolvimento de software, algoritmos e estruturas de dados.',
 
     // Contact
     'contact.title': 'Entre em Contato',
@@ -98,6 +121,7 @@ const translations = {
     'nav.skills': 'Habilidades',
     'nav.contact': 'Contato',
     'nav.certifications': 'Certificações',
+    'nav.education': 'Formação',
   }
 };
 
@@ -106,8 +130,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
-  const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations[typeof language]] || key;
+  const t = (key: string, options?: Record<string, any>): string => {
+    const translation = translations[language][key as keyof typeof translations[typeof language]];
+    
+    if (!translation && options?.defaultValue) {
+      return options.defaultValue;
+    }
+    
+    return translation || key;
   };
 
   return (

@@ -435,7 +435,8 @@ const Hero = () => {
             className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6"
           >
             {t('hero.greeting')}
-            <span className="text-blue-600 dark:text-blue-400"> Luca Capeloci Guerreiro</span>
+            <span className="text-gray-900 dark:text-white"> Luca</span>
+            <span className="text-blue-600 dark:text-blue-400">.cloud</span>
           </motion.h1>
           <motion.h2 
             variants={itemVariants}

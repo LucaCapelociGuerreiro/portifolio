@@ -19,6 +19,7 @@ const translations = {
   en: {
     // Hero Section
     'hero.greeting': 'Hi, I\'m',
+    'hero.name': 'Luca Capeloci Guerreiro',
     'hero.title': 'Solutions Architect | DevOps | Cloud',
     'hero.description': 'Specializing in cloud-native architecture, infrastructure automation, and DevOps practices. I transform complex challenges into scalable and resilient solutions, leveraging cutting-edge technologies and best practices in cloud computing.',
     'hero.contact': 'Contact Me',
@@ -52,6 +53,9 @@ const translations = {
     'education.location': 'Location',
     'education.period': '2016 - 2020',
     'education.description': 'Graduated with a Bachelor\'s degree in Computer Science, focusing on software development, algorithms, and data structures.',
+    'education.viewCertificate': 'View Certificate',
+    'education.certificateTitle': 'University Certificate',
+    'education.downloadCertificate': 'Download Certificate',
 
     // Contact
     'contact.title': 'Get in Touch',
@@ -75,6 +79,7 @@ const translations = {
   pt: {
     // Hero Section
     'hero.greeting': 'Olá, eu sou',
+    'hero.name': 'Luca Capeloci Guerreiro',
     'hero.title': 'Arquiteto de Soluções | DevOps | Cloud',
     'hero.description': 'Especialista em arquitetura de soluções cloud-native, automação de infraestrutura e práticas DevOps. Transformando desafios complexos em soluções escaláveis e resilientes.',
     'hero.contact': 'Contate-me',
@@ -104,10 +109,13 @@ const translations = {
     'education.subtitle': 'Minha formação e qualificações acadêmicas',
     'education.bachelorDegree': 'Bacharelado',
     'education.computerScience': 'Ciências da Computação',
-    'education.institution': 'Universidade',
-    'education.location': 'Brasil',
-    'education.period': '2016 - 2020',
-    'education.description': 'Formado em Bacharelado em Ciências da Computação, com foco em desenvolvimento de software, algoritmos e estruturas de dados.',
+    'education.institution': 'Universidade Tiradentes',
+    'education.location': 'Sergipe,Brasil',
+    'education.period': '2020 - 2024',
+    'education.description': 'Bacharel em Ciência da Computação, concluído com a 3ª melhor colocação geral do período. Meu Trabalho de Conclusão de Curso foi focado em security assessments em ambientes de nuvem pública, com ênfase na AWS.',
+    'education.viewCertificate': 'Ver Certificado',
+    'education.certificateTitle': 'Certificado Universitário',
+    'education.downloadCertificate': 'Baixar Certificado',
 
     // Contact
     'contact.title': 'Entre em Contato',

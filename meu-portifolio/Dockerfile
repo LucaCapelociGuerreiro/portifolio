@@ -1,59 +1,41 @@
-# Base image for building the application
-FROM node:18-alpine AS builder
-
-# Set working directory
+# Etapa de dependências
+FROM node:18-alpine AS deps
 WORKDIR /app
-
-# Definindo variáveis de ambiente para build
-ARG BUILD_TIME=unknown
-ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
-
-# Copy package files
 COPY package.json package-lock.json ./
+# Usar mirror oficial do npm para evitar lentidão
+RUN npm config set registry https://registry.npmjs.org/ \
+  && npm ci --legacy-peer-deps
 
-# Install dependencies
-RUN npm ci --legacy-peer-deps
-
-# Copy all files
+# Etapa de build
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/package-lock.json ./package-lock.json
 COPY . .
-
-# Build the Next.js application
 RUN npm run build
 
-# Production image
+# Imagem final de produção
 FROM node:18-alpine AS runner
-
-# Set working directory
 WORKDIR /app
-
-# Set environment variables
 ENV NODE_ENV=production
-
-# Passando variáveis de tempo de build para a imagem final
 ARG BUILD_TIME=unknown
 ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
 
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Cria usuário não-root
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder
+# Copia apenas o necessário do build
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/standalone .
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
-# Set correct permissions
 RUN chown -R nextjs:nodejs /app
-
-# Switch to non-root user
 USER nextjs
-
-# Expose port
 EXPOSE 3000
-
-# Define environment variable for the port
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
-
-# Start the application
 CMD ["node", "server.js"] 

@@ -18,9 +18,11 @@ const CredlyBadge = ({ badgeId, width = 120, height = 120 }: CredlyBadgeProps) =
     setError(false);
     setLoading(true);
 
+    const container = containerRef.current;
+
     // Limpa o container antes de renderizar um novo badge
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
+    if (container) {
+      container.innerHTML = '';
     }
 
     const loadCredlyScript = () => {
@@ -71,9 +73,8 @@ const CredlyBadge = ({ badgeId, width = 120, height = 120 }: CredlyBadgeProps) =
             setLoading(false);
           }
         }, 300);
-      } catch (err) {
+      } catch {
         setError(true);
-        setLoading(false);
       }
     };
 
@@ -81,7 +82,7 @@ const CredlyBadge = ({ badgeId, width = 120, height = 120 }: CredlyBadgeProps) =
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
-      if (containerRef.current) containerRef.current.innerHTML = '';
+      if (container) container.innerHTML = '';
     };
   }, [badgeId, width, height]);
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Calendar, Hash } from 'lucide-react';
+import { Check, Calendar, Hash, Award } from 'lucide-react';
 import CredlyBadge from './CredlyBadge';
 import { useLanguage } from '../context/LanguageContext';
 import Image from 'next/image';

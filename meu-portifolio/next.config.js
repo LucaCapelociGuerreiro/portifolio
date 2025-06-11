@@ -44,7 +44,16 @@ const nextConfig = {
   generateBuildId: async () => {
     // Usa timestamp ou variável de ambiente se definida
     return process.env.NEXT_PUBLIC_BUILD_ID || `build-${Date.now()}`
-  }
+  },
+
+  webpack: (config) => {
+    // Adiciona fallbacks para módulos do Node.js
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      canvas: false,
+    };
+    return config;
+  },
 }
 
 module.exports = nextConfig 

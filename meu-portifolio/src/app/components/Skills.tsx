@@ -20,15 +20,14 @@ const skillCategories = [
       { name: 'AWS', level: 95, logo: '/skills/aws.svg' },
       { name: 'Azure', level: 90, logo: '/skills/azure.svg' },
       { name: 'Google Cloud', level: 85, logo: '/skills/gcp.svg' },
-      { name: 'Kubernetes', level: 90, logo: '/skills/kubernetes.svg' },
-      { name: 'OpenStack', level: 75, logo: '/skills/openstack.svg' },
+      { name: 'Oracle Cloud', level: 90, logo: '/skills/kubernetes.svg' },
     ],
   },
   {
     title: 'DevOps & CI/CD',
     icon: <GitBranch className="w-6 h-6" />,
     skills: [
-      { name: 'Jenkins', level: 90, logo: '/skills/jenkins.svg' },
+      { name: 'CodeBuild', level: 90, logo: '/skills/jenkins.svg' },
       { name: 'GitLab CI', level: 85, logo: '/skills/gitlab.svg' },
       { name: 'GitHub Actions', level: 95, logo: '/skills/github.svg' },
       { name: 'ArgoCD', level: 80, logo: '/skills/argocd.svg' },
@@ -54,7 +53,6 @@ const skillCategories = [
       { name: 'Grafana', level: 90, logo: '/skills/grafana.svg' },
       { name: 'ELK Stack', level: 85, logo: '/skills/elastic.svg' },
       { name: 'Datadog', level: 85, logo: '/skills/datadog.svg' },
-      { name: 'New Relic', level: 80, logo: '/skills/newrelic.svg' },
     ],
   },
   {

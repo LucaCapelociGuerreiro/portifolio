@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, lazy, Suspense } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from 'lucide-react';
+// Removidas importações não utilizadas para corrigir erros de lint
 import { useLanguage } from '../context/LanguageContext';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';

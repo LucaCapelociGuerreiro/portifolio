@@ -1,0 +1,412 @@
+# ==============================================================================
+# PROMETHEUS ALERT RULES - PORTFOLIO MONITORING
+# ==============================================================================
+# Regras de alerta para monitoramento proativo da aplicação
+# Analista DevOps Sênior - Observabilidade e SRE
+
+groups:
+  # ==============================================================================
+  # ALERTAS DE INFRAESTRUTURA
+  # ==============================================================================
+  - name: infrastructure.rules
+    interval: 30s
+    rules:
+    
+    # Instância fora do ar
+    - alert: InstanceDown
+      expr: up == 0
+      for: 1m
+      labels:
+        severity: critical
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Instância {{ $labels.instance }} está fora do ar"
+        description: "A instância {{ $labels.instance }} do job {{ $labels.job }} está fora do ar há mais de 1 minuto."
+        runbook_url: "https://runbooks.company.com/instance-down"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # Alto uso de CPU
+    - alert: HighCPUUsage
+      expr: |
+        (
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+        ) > 80
+      for: 5m
+      labels:
+        severity: warning
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Alto uso de CPU na instância {{ $labels.instance }}"
+        description: "CPU usage está em {{ $value }}% na instância {{ $labels.instance }} há mais de 5 minutos."
+        runbook_url: "https://runbooks.company.com/high-cpu"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # CPU crítico
+    - alert: CriticalCPUUsage
+      expr: |
+        (
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+        ) > 95
+      for: 2m
+      labels:
+        severity: critical
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Uso crítico de CPU na instância {{ $labels.instance }}"
+        description: "CPU usage está em {{ $value }}% na instância {{ $labels.instance }} há mais de 2 minutos."
+        runbook_url: "https://runbooks.company.com/critical-cpu"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # Alto uso de memória
+    - alert: HighMemoryUsage
+      expr: |
+        (
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes
+        ) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Alto uso de memória na instância {{ $labels.instance }}"
+        description: "Memory usage está em {{ $value }}% na instância {{ $labels.instance }} há mais de 5 minutos."
+        runbook_url: "https://runbooks.company.com/high-memory"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # Memória crítica
+    - alert: CriticalMemoryUsage
+      expr: |
+        (
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes
+        ) * 100 > 95
+      for: 2m
+      labels:
+        severity: critical
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Uso crítico de memória na instância {{ $labels.instance }}"
+        description: "Memory usage está em {{ $value }}% na instância {{ $labels.instance }} há mais de 2 minutos."
+        runbook_url: "https://runbooks.company.com/critical-memory"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # Alto uso de disco
+    - alert: HighDiskUsage
+      expr: |
+        (
+          (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"}
+        ) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Alto uso de disco na instância {{ $labels.instance }}"
+        description: "Disk usage está em {{ $value }}% no filesystem {{ $labels.mountpoint }} da instância {{ $labels.instance }}."
+        runbook_url: "https://runbooks.company.com/high-disk"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # Disco crítico
+    - alert: CriticalDiskUsage
+      expr: |
+        (
+          (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"}
+        ) * 100 > 95
+      for: 2m
+      labels:
+        severity: critical
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Uso crítico de disco na instância {{ $labels.instance }}"
+        description: "Disk usage está em {{ $value }}% no filesystem {{ $labels.mountpoint }} da instância {{ $labels.instance }}."
+        runbook_url: "https://runbooks.company.com/critical-disk"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+    
+    # Load average alto
+    - alert: HighLoadAverage
+      expr: node_load15 > 2
+      for: 5m
+      labels:
+        severity: warning
+        category: infrastructure
+        team: devops
+      annotations:
+        summary: "Load average alto na instância {{ $labels.instance }}"
+        description: "Load average de 15 minutos está em {{ $value }} na instância {{ $labels.instance }}."
+        runbook_url: "https://runbooks.company.com/high-load"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+
+  # ==============================================================================
+  # ALERTAS DE APLICAÇÃO
+  # ==============================================================================
+  - name: application.rules
+    interval: 30s
+    rules:
+    
+    # Aplicação fora do ar
+    - alert: ApplicationDown
+      expr: probe_success{job="blackbox-http", instance="http://localhost:80"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        category: application
+        team: development
+      annotations:
+        summary: "Aplicação Portfolio está fora do ar"
+        description: "A aplicação principal não está respondendo há mais de 1 minuto."
+        runbook_url: "https://runbooks.company.com/app-down"
+        dashboard_url: "http://localhost:3001/d/blackbox/blackbox-exporter"
+    
+    # Alto tempo de resposta
+    - alert: HighResponseTime
+      expr: probe_duration_seconds{job="blackbox-http"} > 5
+      for: 3m
+      labels:
+        severity: warning
+        category: application
+        team: development
+      annotations:
+        summary: "Alto tempo de resposta na aplicação"
+        description: "Tempo de resposta está em {{ $value }}s para {{ $labels.instance }} há mais de 3 minutos."
+        runbook_url: "https://runbooks.company.com/high-response-time"
+        dashboard_url: "http://localhost:3001/d/blackbox/blackbox-exporter"
+    
+    # Tempo de resposta crítico
+    - alert: CriticalResponseTime
+      expr: probe_duration_seconds{job="blackbox-http"} > 10
+      for: 1m
+      labels:
+        severity: critical
+        category: application
+        team: development
+      annotations:
+        summary: "Tempo de resposta crítico na aplicação"
+        description: "Tempo de resposta está em {{ $value }}s para {{ $labels.instance }} há mais de 1 minuto."
+        runbook_url: "https://runbooks.company.com/critical-response-time"
+        dashboard_url: "http://localhost:3001/d/blackbox/blackbox-exporter"
+    
+    # SSL Certificate expirando
+    - alert: SSLCertificateExpiringSoon
+      expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+      for: 1m
+      labels:
+        severity: warning
+        category: security
+        team: devops
+      annotations:
+        summary: "Certificado SSL expirando em breve"
+        description: "O certificado SSL para {{ $labels.instance }} expira em {{ $value | humanizeDuration }}."
+        runbook_url: "https://runbooks.company.com/ssl-expiry"
+        dashboard_url: "http://localhost:3001/d/blackbox/blackbox-exporter"
+
+  # ==============================================================================
+  # ALERTAS DE CONTAINERS DOCKER
+  # ==============================================================================
+  - name: docker.rules
+    interval: 30s
+    rules:
+    
+    # Container parado
+    - alert: ContainerDown
+      expr: |
+        time() - container_last_seen{name=~"portfolio.*"} > 60
+      for: 1m
+      labels:
+        severity: critical
+        category: container
+        team: devops
+      annotations:
+        summary: "Container {{ $labels.name }} está parado"
+        description: "O container {{ $labels.name }} não está sendo visto há mais de 1 minuto."
+        runbook_url: "https://runbooks.company.com/container-down"
+        dashboard_url: "http://localhost:3001/d/cadvisor/cadvisor"
+    
+    # Alto uso de CPU em container
+    - alert: ContainerHighCPU
+      expr: |
+        (
+          rate(container_cpu_usage_seconds_total{name=~"portfolio.*"}[5m]) * 100
+        ) > 80
+      for: 5m
+      labels:
+        severity: warning
+        category: container
+        team: devops
+      annotations:
+        summary: "Alto uso de CPU no container {{ $labels.name }}"
+        description: "CPU usage está em {{ $value }}% no container {{ $labels.name }} há mais de 5 minutos."
+        runbook_url: "https://runbooks.company.com/container-high-cpu"
+        dashboard_url: "http://localhost:3001/d/cadvisor/cadvisor"
+    
+    # Alto uso de memória em container
+    - alert: ContainerHighMemory
+      expr: |
+        (
+          container_memory_usage_bytes{name=~"portfolio.*"} / container_spec_memory_limit_bytes{name=~"portfolio.*"}
+        ) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        category: container
+        team: devops
+      annotations:
+        summary: "Alto uso de memória no container {{ $labels.name }}"
+        description: "Memory usage está em {{ $value }}% no container {{ $labels.name }} há mais de 5 minutos."
+        runbook_url: "https://runbooks.company.com/container-high-memory"
+        dashboard_url: "http://localhost:3001/d/cadvisor/cadvisor"
+    
+    # Container reiniciando frequentemente
+    - alert: ContainerRestartingFrequently
+      expr: |
+        rate(container_start_time_seconds{name=~"portfolio.*"}[15m]) * 60 * 15 > 5
+      for: 5m
+      labels:
+        severity: warning
+        category: container
+        team: devops
+      annotations:
+        summary: "Container {{ $labels.name }} reiniciando frequentemente"
+        description: "O container {{ $labels.name }} reiniciou {{ $value }} vezes nos últimos 15 minutos."
+        runbook_url: "https://runbooks.company.com/container-restarting"
+        dashboard_url: "http://localhost:3001/d/cadvisor/cadvisor"
+
+  # ==============================================================================
+  # ALERTAS DE REDE
+  # ==============================================================================
+  - name: network.rules
+    interval: 30s
+    rules:
+    
+    # Conectividade externa perdida
+    - alert: ExternalConnectivityLost
+      expr: probe_success{job="blackbox-icmp", instance="8.8.8.8"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        category: network
+        team: devops
+      annotations:
+        summary: "Conectividade externa perdida"
+        description: "Não é possível fazer ping para 8.8.8.8 há mais de 2 minutos."
+        runbook_url: "https://runbooks.company.com/connectivity-lost"
+        dashboard_url: "http://localhost:3001/d/blackbox/blackbox-exporter"
+    
+    # Alto tráfego de rede
+    - alert: HighNetworkTraffic
+      expr: |
+        (
+          rate(node_network_receive_bytes_total{device!="lo"}[5m]) + 
+          rate(node_network_transmit_bytes_total{device!="lo"}[5m])
+        ) > 100000000  # 100MB/s
+      for: 5m
+      labels:
+        severity: warning
+        category: network
+        team: devops
+      annotations:
+        summary: "Alto tráfego de rede na interface {{ $labels.device }}"
+        description: "Tráfego de rede está em {{ $value | humanizeBytes }}/s na interface {{ $labels.device }}."
+        runbook_url: "https://runbooks.company.com/high-network-traffic"
+        dashboard_url: "http://localhost:3001/d/node-exporter/node-exporter"
+
+  # ==============================================================================
+  # ALERTAS DE MONITORAMENTO
+  # ==============================================================================
+  - name: monitoring.rules
+    interval: 30s
+    rules:
+    
+    # Prometheus perdendo dados
+    - alert: PrometheusDataLoss
+      expr: increase(prometheus_tsdb_data_replay_duration_seconds[1h]) > 0
+      for: 5m
+      labels:
+        severity: warning
+        category: monitoring
+        team: devops
+      annotations:
+        summary: "Prometheus está perdendo dados"
+        description: "Prometheus detectou perda de dados e está fazendo replay."
+        runbook_url: "https://runbooks.company.com/prometheus-data-loss"
+        dashboard_url: "http://localhost:3001/d/prometheus/prometheus"
+    
+    # Prometheus com muitas amostras rejeitadas
+    - alert: PrometheusHighSampleRejection
+      expr: |
+        (
+          rate(prometheus_tsdb_sample_ooo_total[5m]) + 
+          rate(prometheus_tsdb_sample_duplicate_total[5m])
+        ) > 100
+      for: 5m
+      labels:
+        severity: warning
+        category: monitoring
+        team: devops
+      annotations:
+        summary: "Prometheus rejeitando muitas amostras"
+        description: "Prometheus está rejeitando {{ $value }} amostras por segundo."
+        runbook_url: "https://runbooks.company.com/prometheus-sample-rejection"
+        dashboard_url: "http://localhost:3001/d/prometheus/prometheus"
+    
+    # Grafana fora do ar
+    - alert: GrafanaDown
+      expr: probe_success{job="blackbox-http", instance="http://localhost:3001"} == 0
+      for: 2m
+      labels:
+        severity: warning
+        category: monitoring
+        team: devops
+      annotations:
+        summary: "Grafana está fora do ar"
+        description: "Grafana não está respondendo há mais de 2 minutos."
+        runbook_url: "https://runbooks.company.com/grafana-down"
+        dashboard_url: "http://localhost:3001"
+
+  # ==============================================================================
+  # ALERTAS DE BUSINESS LOGIC (CUSTOMIZADOS)
+  # ==============================================================================
+  - name: business.rules
+    interval: 60s
+    rules:
+    
+    # Muitos erros 4xx
+    - alert: HighErrorRate4xx
+      expr: |
+        (
+          sum(rate(nginx_http_requests_total{status=~"4.."}[5m])) / 
+          sum(rate(nginx_http_requests_total[5m]))
+        ) * 100 > 10
+      for: 5m
+      labels:
+        severity: warning
+        category: application
+        team: development
+      annotations:
+        summary: "Alta taxa de erros 4xx"
+        description: "Taxa de erros 4xx está em {{ $value }}% nos últimos 5 minutos."
+        runbook_url: "https://runbooks.company.com/high-4xx-errors"
+        dashboard_url: "http://localhost:3001/d/nginx/nginx"
+    
+    # Muitos erros 5xx
+    - alert: HighErrorRate5xx
+      expr: |
+        (
+          sum(rate(nginx_http_requests_total{status=~"5.."}[5m])) / 
+          sum(rate(nginx_http_requests_total[5m]))
+        ) * 100 > 5
+      for: 2m
+      labels:
+        severity: critical
+        category: application
+        team: development
+      annotations:
+        summary: "Alta taxa de erros 5xx"
+        description: "Taxa de erros 5xx está em {{ $value }}% nos últimos 5 minutos."
+        runbook_url: "https://runbooks.company.com/high-5xx-errors"
+        dashboard_url: "http://localhost:3001/d/nginx/nginx"

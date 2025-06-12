@@ -1,18 +1,154 @@
+# ==============================================================================
+# DOCKER-COMPOSE ULTRA-OTIMIZADO - ANALISTA DEVOPS SÊNIOR
+# ==============================================================================
+# Configurações com limitações rigorosas de recursos para Oracle Cloud
+# Compatível com Always Free Tier (1GB RAM, 1/8 OCPU)
+
 version: '3.8'
 
 services:
-  portfolio:
+  # ============================================================================
+  # APLICAÇÃO NEXT.JS - CONFIGURAÇÕES ULTRA-RESTRITIVAS
+  # ============================================================================
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
+      args:
+        - NODE_ENV=production
+    
+    container_name: portfolio-app
+    
+    # LIMITAÇÕES CRÍTICAS DE RECURSOS
+    deploy:
+      resources:
+        limits:
+          # Máximo 400MB RAM (deixa 600MB para sistema)
+          memory: 400M
+          # Máximo 0.5 CPU (metade do disponível)
+          cpus: '0.5'
+        reservations:
+          # Mínimo garantido
+          memory: 200M
+          cpus: '0.25'
+    
+    # Configurações de memória do container
+    mem_limit: 400m
+    mem_reservation: 200m
+    
+    # Configurações de CPU
+    cpus: 0.5
+    
+    # Variáveis de ambiente otimizadas
     environment:
       - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - NODE_OPTIONS=--max-old-space-size=256
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    
+    # Mapeamento de porta
+    ports:
+      - "3000:3000"
+    
+    # Política de restart otimizada
+    restart: unless-stopped
+    
+    # Health check otimizado
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Configurações de logging otimizadas
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Configurações de segurança
+    security_opt:
+      - no-new-privileges:true
+    
+    # Configurações de rede otimizadas
+    networks:
+      - portfolio-network
+
+  # ============================================================================
+  # NGINX REVERSE PROXY - CACHE E CDN LOCAL
+  # ============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: portfolio-nginx
+    
+    # Limitações de recursos para Nginx
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+          cpus: '0.2'
+        reservations:
+          memory: 50M
+          cpus: '0.1'
+    
+    mem_limit: 100m
+    mem_reservation: 50m
+    cpus: 0.2
+    
+    # Mapeamento de portas
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    # Volumes para configuração
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-cache:/var/cache/nginx
+    
+    # Dependências
+    depends_on:
+      app:
+        condition: service_healthy
+    
+    # Política de restart
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s 
+    
+    # Logging otimizado
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    
+    # Rede
+    networks:
+      - portfolio-network
+
+# ==============================================================================
+# CONFIGURAÇÕES DE REDE
+# ==============================================================================
+networks:
+  portfolio-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ==============================================================================
+# VOLUMES PARA CACHE
+# ==============================================================================
+volumes:
+  nginx-cache:
+    driver: local
+  app-cache:
+    driver: local

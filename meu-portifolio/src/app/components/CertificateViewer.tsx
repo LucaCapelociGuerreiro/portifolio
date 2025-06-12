@@ -1,17 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Document, Page } from 'react-pdf';
+import React, { useState, lazy, Suspense } from 'react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-// Import pdfjs worker
-import { pdfjs } from 'react-pdf';
+// Lazy loading do react-pdf para reduzir bundle inicial
+const Document = lazy(() => import('react-pdf').then(module => ({ default: module.Document })));
+const Page = lazy(() => import('react-pdf').then(module => ({ default: module.Page })));
 
-if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-}
+// Configurar worker do PDF.js apenas quando necessário
+const configurePdfWorker = async () => {
+  const { pdfjs } = await import('react-pdf');
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+  }
+};
 
 interface CertificateViewerProps {
   pdfUrl: string;
@@ -22,7 +27,20 @@ const CertificateViewer: React.FC<CertificateViewerProps> = ({ pdfUrl }) => {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState<number>(0.8); // Começa com 80% do tamanho
+  const [isWorkerConfigured, setIsWorkerConfigured] = useState<boolean>(false);
   const { t } = useLanguage();
+
+  // Configurar worker quando componente for montado
+  React.useEffect(() => {
+    if (!isWorkerConfigured) {
+      configurePdfWorker().then(() => {
+        setIsWorkerConfigured(true);
+      }).catch((err) => {
+        console.error('Error configuring PDF worker:', err);
+        setError('Erro ao configurar visualizador de PDF');
+      });
+    }
+  }, [isWorkerConfigured]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
@@ -72,30 +90,50 @@ const CertificateViewer: React.FC<CertificateViewerProps> = ({ pdfUrl }) => {
       </div>
 
       <div className="w-full max-w-2xl overflow-x-auto">
-        <Document
-          file={pdfUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={onDocumentLoadError}
-          className="flex justify-center"
-          loading={
-            <div className="flex justify-center items-center p-4">
+        {!isWorkerConfigured ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-2">Configurando visualizador...</span>
+          </div>
+        ) : (
+          <Suspense fallback={
+            <div className="flex items-center justify-center p-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <span className="ml-2">{t('loading')}</span>
             </div>
-          }
-        >
-          <Page
-            pageNumber={pageNumber}
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            className="border border-gray-200"
-            scale={scale}
-            loading={
-              <div className="flex justify-center items-center p-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              </div>
-            }
-          />
-        </Document>
+          }>
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              className="flex justify-center"
+              loading={
+                <div className="flex justify-center items-center p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              }
+            >
+              <Suspense fallback={
+                <div className="flex justify-center items-center p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              }>
+                <Page
+                  pageNumber={pageNumber}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="border border-gray-200"
+                  scale={scale}
+                  loading={
+                    <div className="flex justify-center items-center p-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                  }
+                />
+              </Suspense>
+            </Document>
+          </Suspense>
+        )}
       </div>
 
       <div className="flex flex-wrap justify-center gap-2 mt-2">
@@ -133,4 +171,4 @@ const CertificateViewer: React.FC<CertificateViewerProps> = ({ pdfUrl }) => {
   );
 };
 
-export default CertificateViewer; 
+export default CertificateViewer;

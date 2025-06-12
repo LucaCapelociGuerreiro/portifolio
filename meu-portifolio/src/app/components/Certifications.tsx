@@ -76,47 +76,7 @@ const certifications: ProviderCertifications[] = [
     ],
   },
   {
-    provider: 'Azure',
-    certifications: [
-      {
-        name: 'Azure Solutions Architect Expert',
-        date: '2024',
-        id: 'azure-arch-789',
-      },
-      {
-        name: 'Azure DevOps Engineer Expert',
-        date: '2023',
-        id: 'azure-devops-012',
-      },
-      {
-        name: 'Azure Security Engineer Associate',
-        date: '2022',
-        id: 'azure-security-345',
-      },
-    ],
-  },
-  {
-    provider: 'Kubernetes',
-    certifications: [
-      {
-        name: 'Certified Kubernetes Administrator (CKA)',
-        date: '2024',
-        id: 'cka-678',
-      },
-      {
-        name: 'Certified Kubernetes Application Developer (CKAD)',
-        date: '2023',
-        id: 'ckad-901',
-      },
-      {
-        name: 'Certified Kubernetes Security Specialist (CKS)',
-        date: '2022',
-        id: 'cks-234',
-      },
-    ],
-  },
-  {
-    provider: 'HashiCorp',
+    provider: 'Cisco',
     certifications: [
       {
         name: 'HashiCorp Certified: Terraform Associate',
@@ -142,26 +102,6 @@ const certifications: ProviderCertifications[] = [
         name: 'Google Cloud Professional Data Engineer',
         date: '2022',
         id: 'gcp-data-456',
-      },
-    ],
-  },
-  {
-    provider: 'DevOps & SRE',
-    certifications: [
-      {
-        name: 'Certified Jenkins Engineer',
-        date: '2022',
-        id: 'jenkins-789',
-      },
-      {
-        name: 'Docker Certified Associate',
-        date: '2022',
-        id: 'docker-012',
-      },
-      {
-        name: 'Prometheus Certified Associate',
-        date: '2023',
-        id: 'prometheus-345',
       },
     ],
   },

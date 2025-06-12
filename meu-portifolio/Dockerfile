@@ -1,44 +1,67 @@
-# Etapa de dependências
-FROM node:18-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-# Usar mirror oficial do npm para evitar lentidão
-RUN npm config set registry https://registry.npmjs.org/ \
-  && npm ci --legacy-peer-deps
+# ==============================================================================
+# DOCKERFILE ULTRA-OTIMIZADO PARA ORACLE CLOUD - ANALISTA DEVOPS SÊNIOR
+# ==============================================================================
+# Multi-stage build otimizado para reduzir uso de CPU/RAM
+# Compatível com Oracle Cloud Always Free Tier
 
-# Etapa de build
+# Stage 1: Base dependencies com cache otimizado
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Otimização: Copiar apenas package files para melhor cache
+COPY package*.json ./
+
+# Configurar npm para produção e cache otimizado
+RUN npm config set fund false && \
+    npm config set audit false && \
+    npm ci --legacy-peer-deps --prefer-offline && \
+    npm cache clean --force
+
+# Stage 2: Build otimizado com limitação de memória
 FROM node:18-alpine AS builder
 WORKDIR /app
+
+# Copiar dependências do stage anterior
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/package-lock.json ./package-lock.json
 COPY . .
+
+# Configurar variáveis de ambiente para build otimizado
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
+# Build com configurações de memória limitada
 RUN npm run build
 
-# Imagem final de produção
+# Stage 3: Runtime ultra-leve
 FROM node:18-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-ARG BUILD_TIME=unknown
-ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
 
-# Cria usuário não-root
+# Configurações de segurança e performance
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=256"
+ENV PORT=3000
+
+# Criar usuário não-root para segurança
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copia apenas o necessário do build
+# Copiar apenas arquivos necessários para produção
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone .
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-RUN chown -R nextjs:nodejs /app
+# Configurar usuário
 USER nextjs
-EXPOSE 3000
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-CMD ["node", "server.js"]
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1 
+# Expor porta
+EXPOSE 3000
+
+# Health check otimizado
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000 || exit 1
+
+# Comando otimizado para produção
+CMD ["node", "server.js"]

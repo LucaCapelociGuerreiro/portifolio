@@ -1,0 +1,456 @@
+# ==============================================================================
+# ALERTMANAGER CONFIGURATION - PORTFOLIO MONITORING
+# ==============================================================================
+# Configuração do Alertmanager para roteamento e notificações
+# Analista DevOps Sênior - Observabilidade e Incident Management
+
+# ==============================================================================
+# CONFIGURAÇÕES GLOBAIS
+# ==============================================================================
+global:
+  # SMTP Configuration (Gmail example)
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'devops-alerts@company.com'
+  smtp_auth_username: 'devops-alerts@company.com'
+  smtp_auth_password: 'your-app-password'  # Use App Password, not regular password
+  smtp_require_tls: true
+  
+  # Slack Configuration
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  
+  # Resolve timeout
+  resolve_timeout: 5m
+  
+  # HTTP Configuration
+  http_config:
+    tls_config:
+      insecure_skip_verify: false
+
+# ==============================================================================
+# TEMPLATES
+# ==============================================================================
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# ==============================================================================
+# ROTEAMENTO DE ALERTAS
+# ==============================================================================
+route:
+  # Configurações padrão
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  
+  # Rotas específicas
+  routes:
+    # Alertas críticos - notificação imediata
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 30m
+      routes:
+        # Infraestrutura crítica
+        - match:
+            category: infrastructure
+          receiver: 'infrastructure-critical'
+        # Aplicação crítica
+        - match:
+            category: application
+          receiver: 'application-critical'
+        # Container crítico
+        - match:
+            category: container
+          receiver: 'container-critical'
+    
+    # Alertas de warning - notificação agrupada
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      group_interval: 10m
+      repeat_interval: 2h
+      routes:
+        # Infraestrutura warning
+        - match:
+            category: infrastructure
+          receiver: 'infrastructure-warning'
+        # Aplicação warning
+        - match:
+            category: application
+          receiver: 'application-warning'
+        # Monitoramento warning
+        - match:
+            category: monitoring
+          receiver: 'monitoring-warning'
+    
+    # Alertas de segurança
+    - match:
+        category: security
+      receiver: 'security-alerts'
+      group_wait: 5s
+      group_interval: 5m
+      repeat_interval: 1h
+    
+    # Alertas de rede
+    - match:
+        category: network
+      receiver: 'network-alerts'
+      group_wait: 15s
+      group_interval: 5m
+      repeat_interval: 1h
+    
+    # Alertas de business logic
+    - match:
+        category: business
+      receiver: 'business-alerts'
+      group_wait: 30s
+      group_interval: 10m
+      repeat_interval: 4h
+
+# ==============================================================================
+# INIBIÇÃO DE ALERTAS
+# ==============================================================================
+inhibit_rules:
+  # Se a instância está down, não alertar sobre CPU/Memory/Disk
+  - source_match:
+      alertname: InstanceDown
+    target_match_re:
+      alertname: (HighCPUUsage|HighMemoryUsage|HighDiskUsage|HighLoadAverage)
+    equal: ['instance']
+  
+  # Se a aplicação está down, não alertar sobre tempo de resposta
+  - source_match:
+      alertname: ApplicationDown
+    target_match_re:
+      alertname: (HighResponseTime|CriticalResponseTime)
+    equal: ['instance']
+  
+  # Se há conectividade externa perdida, não alertar sobre aplicação down
+  - source_match:
+      alertname: ExternalConnectivityLost
+    target_match:
+      alertname: ApplicationDown
+  
+  # Alertas críticos inibem warnings do mesmo tipo
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ['alertname', 'instance']
+
+# ==============================================================================
+# RECEIVERS (DESTINATÁRIOS)
+# ==============================================================================
+receivers:
+  # ==============================================================================
+  # RECEIVER PADRÃO
+  # ==============================================================================
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'devops-team@company.com'
+        subject: '[ALERT] {{ .GroupLabels.alertname }} - Portfolio'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          Severity: {{ .Labels.severity }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        headers:
+          X-Priority: '3'
+  
+  # ==============================================================================
+  # ALERTAS CRÍTICOS
+  # ==============================================================================
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-critical'
+        title: '🚨 CRITICAL ALERT - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Instance:* {{ .Labels.instance }}
+          *Severity:* {{ .Labels.severity }}
+          *Time:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          *Dashboard:* {{ .Annotations.dashboard_url }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+    email_configs:
+      - to: 'devops-oncall@company.com,sre-team@company.com'
+        subject: '🚨 [CRITICAL] {{ .GroupLabels.alertname }} - Portfolio'
+        body: |
+          CRITICAL ALERT DETECTED!
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          Severity: {{ .Labels.severity }}
+          Category: {{ .Labels.category }}
+          Team: {{ .Labels.team }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          Runbook: {{ .Annotations.runbook_url }}
+          Dashboard: {{ .Annotations.dashboard_url }}
+          {{ end }}
+        headers:
+          X-Priority: '1'
+  
+  # ==============================================================================
+  # INFRAESTRUTURA CRÍTICA
+  # ==============================================================================
+  - name: 'infrastructure-critical'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#infrastructure-alerts'
+        title: '🔥 INFRASTRUCTURE CRITICAL - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Instance:* {{ .Labels.instance }}
+          *Value:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+  
+  # ==============================================================================
+  # APLICAÇÃO CRÍTICA
+  # ==============================================================================
+  - name: 'application-critical'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#application-alerts'
+        title: '💥 APPLICATION CRITICAL - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Instance:* {{ .Labels.instance }}
+          *Description:* {{ .Annotations.description }}
+          *Dashboard:* {{ .Annotations.dashboard_url }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+  
+  # ==============================================================================
+  # CONTAINER CRÍTICO
+  # ==============================================================================
+  - name: 'container-critical'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#container-alerts'
+        title: '🐳 CONTAINER CRITICAL - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Container:* {{ .Labels.name }}
+          *Description:* {{ .Annotations.description }}
+          *Dashboard:* {{ .Annotations.dashboard_url }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+  
+  # ==============================================================================
+  # ALERTAS DE WARNING
+  # ==============================================================================
+  - name: 'warning-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-warning'
+        title: '⚠️ WARNING ALERT - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Instance:* {{ .Labels.instance }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: 'warning'
+        send_resolved: true
+  
+  # ==============================================================================
+  # INFRAESTRUTURA WARNING
+  # ==============================================================================
+  - name: 'infrastructure-warning'
+    email_configs:
+      - to: 'infrastructure-team@company.com'
+        subject: '⚠️ [WARNING] Infrastructure Alert - Portfolio'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Instance: {{ .Labels.instance }}
+          Description: {{ .Annotations.description }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+  
+  # ==============================================================================
+  # APLICAÇÃO WARNING
+  # ==============================================================================
+  - name: 'application-warning'
+    email_configs:
+      - to: 'development-team@company.com'
+        subject: '⚠️ [WARNING] Application Alert - Portfolio'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Instance: {{ .Labels.instance }}
+          Description: {{ .Annotations.description }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+  
+  # ==============================================================================
+  # MONITORAMENTO WARNING
+  # ==============================================================================
+  - name: 'monitoring-warning'
+    email_configs:
+      - to: 'devops-team@company.com'
+        subject: '⚠️ [WARNING] Monitoring Alert - Portfolio'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+  
+  # ==============================================================================
+  # ALERTAS DE SEGURANÇA
+  # ==============================================================================
+  - name: 'security-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#security-alerts'
+        title: '🔒 SECURITY ALERT - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Instance:* {{ .Labels.instance }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: '#ff9900'
+        send_resolved: true
+    email_configs:
+      - to: 'security-team@company.com,devops-team@company.com'
+        subject: '🔒 [SECURITY] {{ .GroupLabels.alertname }} - Portfolio'
+        body: |
+          SECURITY ALERT DETECTED!
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Instance: {{ .Labels.instance }}
+          Description: {{ .Annotations.description }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        headers:
+          X-Priority: '2'
+  
+  # ==============================================================================
+  # ALERTAS DE REDE
+  # ==============================================================================
+  - name: 'network-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#network-alerts'
+        title: '🌐 NETWORK ALERT - Portfolio'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Instance:* {{ .Labels.instance }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        color: '#0099cc'
+        send_resolved: true
+  
+  # ==============================================================================
+  # ALERTAS DE BUSINESS
+  # ==============================================================================
+  - name: 'business-alerts'
+    email_configs:
+      - to: 'product-team@company.com,development-team@company.com'
+        subject: '📊 [BUSINESS] {{ .GroupLabels.alertname }} - Portfolio'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          Dashboard: {{ .Annotations.dashboard_url }}
+          {{ end }}
+
+# ==============================================================================
+# CONFIGURAÇÕES AVANÇADAS
+# ==============================================================================
+
+# Configuração de tempo limite para notificações
+time_intervals:
+  - name: business-hours
+    time_intervals:
+      - times:
+          - start_time: '09:00'
+            end_time: '18:00'
+        weekdays: ['monday:friday']
+        location: 'America/Sao_Paulo'
+  
+  - name: weekend
+    time_intervals:
+      - times:
+          - start_time: '00:00'
+            end_time: '23:59'
+        weekdays: ['saturday', 'sunday']
+        location: 'America/Sao_Paulo'
+
+# Configuração de mute (silenciamento)
+mute_time_intervals:
+  - business-hours  # Silenciar durante horário comercial para alertas não críticos
+
+# ==============================================================================
+# CONFIGURAÇÕES DE CLUSTERING (para HA)
+# ==============================================================================
+# cluster:
+#   listen-address: "0.0.0.0:9094"
+#   peer: ["alertmanager-1:9094", "alertmanager-2:9094"]
+#   gossip-interval: "200ms"
+#   pushpull-interval: "60s"
+
+# ==============================================================================
+# CONFIGURAÇÕES DE API
+# ==============================================================================
+api:
+  v2:
+    cors:
+      allowed_origins: ["*"]
+      allowed_methods: ["GET", "POST", "PUT", "DELETE"]
+      allowed_headers: ["*"]
+
+# ==============================================================================
+# CONFIGURAÇÕES DE LOG
+# ==============================================================================
+log:
+  level: info
+  format: json
+
+# ==============================================================================
+# CONFIGURAÇÕES DE STORAGE
+# ==============================================================================
+storage:
+  path: "/alertmanager/data"
+  retention: "120h"  # 5 dias
+
+# ==============================================================================
+# CONFIGURAÇÕES DE WEB
+# ==============================================================================
+web:
+  listen-address: "0.0.0.0:9093"
+  external-url: "http://localhost:9093"
+  route-prefix: "/"
+  get-concurrency: 0
+  timeout: 0
+  read-timeout: 30s
+  max-connections: 512

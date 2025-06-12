@@ -1,0 +1,306 @@
+# ==============================================================================
+# DOCKER COMPOSE - MONITORAMENTO E OBSERVABILIDADE
+# ==============================================================================
+# Stack completa de monitoramento com Prometheus, Grafana e Node Exporter
+# Analista DevOps Sênior - Observabilidade e Monitoramento
+
+version: '3.8'
+
+services:
+  # ==============================================================================
+  # PROMETHEUS - COLETA DE MÉTRICAS
+  # ==============================================================================
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    container_name: portfolio-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--storage.tsdb.retention.size=1GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--log.level=info'
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+    environment:
+      - TZ=America/Sao_Paulo
+
+  # ==============================================================================
+  # GRAFANA - VISUALIZAÇÃO DE MÉTRICAS
+  # ==============================================================================
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: portfolio-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      # Configurações básicas
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123!@#
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_USERS_AUTO_ASSIGN_ORG=true
+      - GF_USERS_AUTO_ASSIGN_ORG_ROLE=Viewer
+      
+      # Configurações de servidor
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      
+      # Configurações de banco de dados
+      - GF_DATABASE_TYPE=sqlite3
+      - GF_DATABASE_PATH=/var/lib/grafana/grafana.db
+      
+      # Configurações de sessão
+      - GF_SESSION_PROVIDER=file
+      - GF_SESSION_COOKIE_SECURE=false
+      
+      # Configurações de analytics
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      
+      # Configurações de logs
+      - GF_LOG_MODE=console
+      - GF_LOG_LEVEL=info
+      
+      # Timezone
+      - TZ=America/Sao_Paulo
+      
+      # Configurações de instalação de plugins
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=false"
+
+  # ==============================================================================
+  # NODE EXPORTER - MÉTRICAS DO SISTEMA
+  # ==============================================================================
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: portfolio-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /etc/hostname:/etc/nodename:ro
+      - /etc/localtime:/etc/localtime:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.textfile.directory=/etc/node-exporter/'
+      - '--collector.systemd'
+      - '--collector.processes'
+      - '--web.listen-address=:9100'
+      - '--log.level=info'
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+    environment:
+      - TZ=America/Sao_Paulo
+
+  # ==============================================================================
+  # CADVISOR - MÉTRICAS DE CONTAINERS
+  # ==============================================================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: portfolio-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    command:
+      - '--housekeeping_interval=30s'
+      - '--max_housekeeping_interval=35s'
+      - '--event_storage_event_limit=default=0'
+      - '--event_storage_age_limit=default=0'
+      - '--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,accelerator,hugetlb,referenced_memory,cpu_topology,resctrl'
+      - '--docker_only=true'
+      - '--store_container_labels=false'
+      - '--whitelisted_container_labels=io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace'
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+    environment:
+      - TZ=America/Sao_Paulo
+
+  # ==============================================================================
+  # ALERTMANAGER - GERENCIAMENTO DE ALERTAS
+  # ==============================================================================
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: portfolio-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--web.route-prefix=/'
+      - '--cluster.listen-address='
+      - '--log.level=info'
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+    environment:
+      - TZ=America/Sao_Paulo
+
+  # ==============================================================================
+  # BLACKBOX EXPORTER - MONITORAMENTO DE ENDPOINTS
+  # ==============================================================================
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.24.0
+    container_name: portfolio-blackbox-exporter
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./monitoring/blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+      - '--log.level=info'
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9115/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+    environment:
+      - TZ=America/Sao_Paulo
+
+# ==============================================================================
+# VOLUMES PERSISTENTES
+# ==============================================================================
+volumes:
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/monitoring/prometheus/data
+  
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/monitoring/grafana/data
+  
+  alertmanager_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/monitoring/alertmanager/data
+
+# ==============================================================================
+# REDES
+# ==============================================================================
+networks:
+  monitoring:
+    driver: bridge
+    name: portfolio-monitoring
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    labels:
+      - "com.portfolio.network.description=Rede de monitoramento"
+      - "com.portfolio.network.type=monitoring"
+
+# ==============================================================================
+# CONFIGURAÇÕES ADICIONAIS
+# ==============================================================================
+
+# Para usar este arquivo:
+# 1. Crie os diretórios de configuração:
+#    mkdir -p monitoring/{prometheus,grafana,alertmanager,blackbox}
+#    mkdir -p /opt/monitoring/{prometheus,grafana,alertmanager}/data
+#
+# 2. Execute o stack de monitoramento:
+#    docker-compose -f docker-compose.monitoring.yml up -d
+#
+# 3. Acesse os serviços:
+#    - Grafana: http://localhost:3001 (admin/admin123!@#)
+#    - Prometheus: http://localhost:9090
+#    - AlertManager: http://localhost:9093
+#    - Node Exporter: http://localhost:9100/metrics
+#    - cAdvisor: http://localhost:8080
+#    - Blackbox Exporter: http://localhost:9115
+#
+# 4. Configure os dashboards no Grafana
+# 5. Configure as regras de alerta no Prometheus
+# 6. Configure as notificações no AlertManager

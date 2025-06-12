@@ -1,0 +1,236 @@
+# ==============================================================================
+# TERRAFORM VARIABLES EXAMPLE - ORACLE CLOUD INFRASTRUCTURE
+# ==============================================================================
+# Arquivo de exemplo para configuração das variáveis do Terraform
+# Copie este arquivo para terraform.tfvars e preencha com seus valores
+# Analista DevOps Sênior - Infraestrutura como Código
+
+# ==============================================================================
+# ORACLE CLOUD CREDENTIALS
+# ==============================================================================
+# Obtenha estes valores no Oracle Cloud Console
+
+# OCID do seu tenancy (encontrado em: Identity > Tenancy Details)
+tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaa..."
+
+# OCID do seu usuário (encontrado em: Identity > Users > User Details)
+user_ocid = "ocid1.user.oc1..aaaaaaaa..."
+
+# Fingerprint da sua API Key (encontrado em: Identity > Users > API Keys)
+fingerprint = "aa:bb:cc:dd:ee:ff:gg:hh:ii:jj:kk:ll:mm:nn:oo:pp"
+
+# Caminho para sua chave privada da API (gerada junto com a API Key)
+private_key_path = "~/.oci/oci_api_key.pem"
+
+# OCID do compartment onde os recursos serão criados
+# Use o OCID do tenancy para usar o compartment root
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaa..."
+
+# Região onde os recursos serão criados
+# Regiões Always Free: us-ashburn-1, us-phoenix-1, eu-frankfurt-1, uk-london-1, ap-tokyo-1, ap-seoul-1, ap-mumbai-1, sa-saopaulo-1, ca-toronto-1, eu-amsterdam-1
+region = "sa-saopaulo-1"
+
+# ==============================================================================
+# ENVIRONMENT CONFIGURATION
+# ==============================================================================
+
+# Ambiente de deployment
+environment = "production"
+
+# Nome do projeto
+project_name = "portfolio"
+
+# Proprietário dos recursos
+owner = "seu-nome"
+
+# ==============================================================================
+# COMPUTE CONFIGURATION
+# ==============================================================================
+
+# Shape da instância (Always Free: VM.Standard.E2.1.Micro)
+instance_shape = "VM.Standard.E2.1.Micro"
+
+# Número de OCPUs (Always Free: 1)
+instance_ocpus = 1
+
+# Memória em GB (Always Free: 1)
+instance_memory_gb = 1
+
+# Tamanho do volume de boot em GB (Always Free: até 47GB)
+boot_volume_size_gb = 47
+
+# ==============================================================================
+# NETWORK CONFIGURATION
+# ==============================================================================
+
+# CIDR da VCN
+vcn_cidr = "10.0.0.0/16"
+
+# CIDR da subnet
+subnet_cidr = "10.0.1.0/24"
+
+# CIDRs permitidos para SSH (0.0.0.0/0 = qualquer IP)
+# Para maior segurança, especifique apenas seu IP: ["SEU.IP.AQUI/32"]
+allowed_ssh_cidrs = ["0.0.0.0/0"]
+
+# CIDRs permitidos para HTTP/HTTPS
+allowed_http_cidrs = ["0.0.0.0/0"]
+
+# ==============================================================================
+# APPLICATION CONFIGURATION
+# ==============================================================================
+
+# Porta da aplicação Next.js
+app_port = 3000
+
+# Porta do Nginx
+nginx_port = 80
+
+# Porta SSL/HTTPS
+ssl_port = 443
+
+# ==============================================================================
+# MONITORING CONFIGURATION
+# ==============================================================================
+
+# Habilitar monitoramento
+enable_monitoring = true
+
+# Porta do Prometheus
+prometheus_port = 9090
+
+# Porta do Grafana
+grafana_port = 3001
+
+# Porta do Node Exporter
+node_exporter_port = 9100
+
+# ==============================================================================
+# STORAGE CONFIGURATION
+# ==============================================================================
+
+# Criar volume de bloco adicional (Always Free: até 200GB total)
+create_block_volume = false
+
+# Tamanho do volume de bloco em GB
+block_volume_size_gb = 50
+
+# Dias de retenção para backups
+backup_retention_days = 7
+
+# ==============================================================================
+# LOAD BALANCER CONFIGURATION
+# ==============================================================================
+
+# Criar Load Balancer (NÃO é Always Free - custa ~$20/mês)
+create_load_balancer = false
+
+# Shape do Load Balancer
+lb_shape = "flexible"
+
+# Largura de banda mínima em Mbps
+lb_min_bandwidth_mbps = 10
+
+# Largura de banda máxima em Mbps
+lb_max_bandwidth_mbps = 10
+
+# ==============================================================================
+# SECURITY CONFIGURATION
+# ==============================================================================
+
+# Habilitar Web Application Firewall (NÃO é Always Free)
+enable_waf = false
+
+# Habilitar proteção DDoS
+enable_ddos_protection = true
+
+# Chave SSH pública adicional (opcional)
+# Se não especificada, uma nova será gerada automaticamente
+ssh_public_key = ""
+
+# Habilitar gerenciamento automático do OS
+enable_os_management = true
+
+# ==============================================================================
+# TAGS CONFIGURATION
+# ==============================================================================
+
+# Tags comuns para todos os recursos
+common_tags = {
+  "ManagedBy"   = "Terraform"
+  "Project"     = "Portfolio"
+  "Environment" = "production"
+  "Owner"       = "DevOps-Team"
+  "CostCenter"  = "Engineering"
+}
+
+# Tags adicionais específicas
+additional_tags = {
+  "Application" = "NextJS-Portfolio"
+  "Version"     = "1.0.0"
+}
+
+# ==============================================================================
+# BACKUP CONFIGURATION
+# ==============================================================================
+
+# Habilitar backups automáticos
+enable_automatic_backups = true
+
+# Cronograma de backup (formato cron)
+backup_schedule = "0 2 * * *"  # Diário às 2h da manhã
+
+# ==============================================================================
+# PERFORMANCE CONFIGURATION
+# ==============================================================================
+
+# Habilitar auto scaling (requer múltiplas instâncias - NÃO é Always Free)
+enable_auto_scaling = false
+
+# Número mínimo de instâncias
+min_instances = 1
+
+# Número máximo de instâncias
+max_instances = 3
+
+# ==============================================================================
+# INSTRUÇÕES DE USO
+# ==============================================================================
+
+# 1. Copie este arquivo para terraform.tfvars:
+#    cp terraform.tfvars.example terraform.tfvars
+
+# 2. Preencha os valores das credenciais Oracle Cloud
+
+# 3. Ajuste as configurações conforme necessário
+
+# 4. Execute os comandos Terraform:
+#    terraform init
+#    terraform plan
+#    terraform apply
+
+# 5. Configure os secrets no GitHub Actions com os outputs do Terraform
+
+# ==============================================================================
+# CONFIGURAÇÃO ALWAYS FREE TIER
+# ==============================================================================
+
+# Para usar apenas recursos Always Free, mantenha:
+# - instance_shape = "VM.Standard.E2.1.Micro"
+# - instance_ocpus = 1
+# - instance_memory_gb = 1
+# - boot_volume_size_gb <= 47
+# - create_block_volume = false (ou block_volume_size_gb <= 200 total)
+# - create_load_balancer = false
+# - enable_waf = false
+# - enable_auto_scaling = false
+
+# ==============================================================================
+# SEGURANÇA
+# ==============================================================================
+
+# IMPORTANTE: 
+# - Nunca commite o arquivo terraform.tfvars no Git
+# - Adicione terraform.tfvars ao .gitignore
+# - Use variáveis de ambiente ou Terraform Cloud para CI/CD
+# - Mantenha suas chaves privadas seguras

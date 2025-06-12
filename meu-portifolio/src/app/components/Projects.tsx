@@ -5,8 +5,8 @@ import { Cloud, Server, Lock, GitBranch } from 'lucide-react';
 
 const projects = [
   {
-    title: 'Migração para Cloud-Native',
-    description: 'Liderou a migração de uma arquitetura monolítica para microserviços na AWS, implementando CI/CD com GitLab e Kubernetes.',
+    title: 'Redução de custos em nuvem	',
+    description: 'Liderou a redução de custos em nuvem na Baasic, com a implementação de práticas de GitOps e automação de infraestrutura, além de migração de ambientes para AWS, Google Cloud e IBM Cloud.',
     icon: Cloud,
     tags: ['AWS', 'Kubernetes', 'GitLab CI', 'Terraform', 'Microservices'],
   },

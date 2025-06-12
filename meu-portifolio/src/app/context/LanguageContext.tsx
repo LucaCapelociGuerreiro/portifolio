@@ -20,7 +20,7 @@ const translations = {
     // Hero Section
     'hero.greeting': 'Hi, I\'m',
     'hero.name': 'Luca Capeloci Guerreiro',
-    'hero.title': 'Solutions Architect | DevOps | Cloud',
+    'hero.title': 'Solutions Architect | DevOps | Cloud | Security',
     'hero.description': 'Specializing in cloud-native architecture, infrastructure automation, and DevOps practices. I transform complex challenges into scalable and resilient solutions, leveraging cutting-edge technologies and best practices in cloud computing.',
     'hero.contact': 'Contact Me',
     'hero.projects': 'View Projects',
@@ -80,7 +80,7 @@ const translations = {
     // Hero Section
     'hero.greeting': 'Olá, eu sou',
     'hero.name': 'Luca Capeloci Guerreiro',
-    'hero.title': 'Arquiteto de Soluções | DevOps | Cloud',
+    'hero.title': 'Arquiteto de Soluções | DevOps | Cloud | Security',
     'hero.description': 'Especialista em arquitetura de soluções cloud-native, automação de infraestrutura e práticas DevOps. Transformando desafios complexos em soluções escaláveis e resilientes.',
     'hero.contact': 'Contate-me',
     'hero.projects': 'Ver Projetos',

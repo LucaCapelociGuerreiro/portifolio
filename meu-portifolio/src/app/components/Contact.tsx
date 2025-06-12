@@ -53,7 +53,7 @@ const Contact = () => {
       
       <div className="mt-8 text-center">
         <p className="text-gray-400">Or reach me at:</p>
-        <p className="text-gray-300 font-medium mt-1">contact@example.com</p>
+        <p className="text-gray-300 font-medium mt-1">lucacguerreiro@gmail.com</p>
       </div>
     </div>
   </div>

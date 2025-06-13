@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  swcMinify: true,
   
   // Otimização de imagens desativada para build mais rápido
   images: {
@@ -21,10 +20,6 @@ const nextConfig = {
   experimental: {
     // Reduz tamanho do bundle
     optimizeCss: true,
-    // Acelera compilação
-    turbotrace: {
-      logLevel: 'error',
-    },
   },
   
   // Otimizações de webpack

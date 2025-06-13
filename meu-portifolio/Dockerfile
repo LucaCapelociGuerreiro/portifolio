@@ -22,7 +22,9 @@ COPY package*.json .npmrc ./
 
 # Instalar apenas dependências de produção com otimizações
 RUN npm config set registry https://registry.npmjs.org/ && \
-    npm config set network-timeout 300000 && \
+    npm config set fetch-timeout 300000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
     npm ci --omit=dev --no-audit --no-fund --prefer-offline --no-progress && \
     npm cache clean --force && \
     rm -rf /root/.npm

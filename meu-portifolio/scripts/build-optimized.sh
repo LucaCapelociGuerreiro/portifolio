@@ -77,7 +77,7 @@ docker images "${REGISTRY}/${IMAGE_NAME}" --format "table {{.Repository}}:{{.Tag
 
 log "🏗️ Iniciando build multi-stage com cache..."
 
-# Build com cache registry e multi-platform
+# Build com cache registry e multi-platform - OTIMIZADO PARA EVITAR TIMEOUT
 docker buildx build \
     --platform linux/amd64 \
     --cache-from type=registry,ref=${REGISTRY}/${IMAGE_NAME}:cache \
@@ -89,6 +89,14 @@ docker buildx build \
     --build-arg BUILDKIT_INLINE_CACHE=1 \
     --build-arg NODE_ENV=production \
     --build-arg NEXT_TELEMETRY_DISABLED=1 \
+    --build-arg DISABLE_ESLINT_PLUGIN=true \
+    --build-arg DISABLE_TYPESCRIPT_PLUGIN=true \
+    --progress=plain \
+    --network=host \
+    --memory=4g \
+    --memory-swap=4g \
+    --cpu-quota=200000 \
+    --ulimit nofile=65536:65536 \
     --metadata-file build-metadata.json \
     --push \
     . || error "Falha no build da imagem"

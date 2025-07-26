@@ -27,6 +27,7 @@ COPY --from=deps /app/node_modules ./node_modules
 RUN npm run build:fast -- --no-lint && \
     find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
 
+
 # ================================================================
 # Stage 3: Runtime (apenas artefatos finais)
 # ================================================================

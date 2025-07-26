@@ -5,7 +5,7 @@ FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat curl && rm -rf /var/cache/apk/*
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY ./package.json ./package-lock.json ./
 # ✅ Instalar TUDO (incluindo devDependencies)
 RUN npm ci --legacy-peer-deps
 

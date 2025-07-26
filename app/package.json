@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build --no-lint",
-    "build:fast": "NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production NODE_OPTIONS='--max-old-space-size=1024' next build -c next.config.prod.js --no-lint",
+    "build:fast": "NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production NODE_OPTIONS='--max-old-space-size=1024' NEXT_CONFIG=next.config.prod.js next build --no-lint",
     "build:ci": "bash ./scripts/build-ci.sh",
     "build:cache": "bash ./scripts/build-with-cache.sh",
     "start": "next start",

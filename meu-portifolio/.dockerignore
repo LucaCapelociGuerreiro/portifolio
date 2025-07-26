@@ -7,12 +7,22 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .npm
+.yarn
+.yarnrc
+.pnpm-store
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
 
 # Build outputs
 .next
 out
 build
 dist
+.turbo
+.swc
+.vercel
+.netlify
 
 # Cache
 .cache
@@ -42,12 +52,35 @@ dist
 # Testes
 coverage
 __tests__
+__mocks__
 *.test.js
 *.spec.js
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
 jest.config.js
+vitest.config.js
+playwright.config.js
 
 # Logs
 logs
+
+# Docker e scripts
+Dockerfile*
+docker-compose*
+*.sh
+*.bash
+*.yml
+*.yaml
+scripts/
+
+# Documentação
+*.md
+LICENSE
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
 *.log
 
 # Misc

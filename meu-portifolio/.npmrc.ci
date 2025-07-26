@@ -1,0 +1,9 @@
+registry=https://registry.npmjs.org/
+fetch-timeout=300000
+fetch-retry-mintimeout=20000
+fetch-retry-maxtimeout=120000
+network-concurrency=8
+cache-min=3600
+prefer-offline=true
+fund=false
+audit=false

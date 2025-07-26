@@ -20,12 +20,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Copiar apenas os arquivos de dependências para aproveitar o cache
 COPY package*.json .npmrc ./
 
-# Instalar apenas dependências de produção com otimizações
-RUN npm config set registry https://registry.npmjs.org/ && \
-    npm config set fetch-timeout 300000 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm ci --omit=dev --no-audit --no-fund --prefer-offline --no-progress --legacy-peer-deps && \
+# Criar .npmrc otimizado para acelerar instalação
+RUN echo "registry=https://registry.npmjs.org/\nfetch-timeout=300000\nfetch-retry-mintimeout=20000\nfetch-retry-maxtimeout=120000\nnetwork-concurrency=8\ncache-min=3600\nprefer-offline=true\nfund=false\naudit=false" > .npmrc
+
+# Instalar apenas dependências de produção com otimizações avançadas
+RUN npm ci --omit=dev --no-audit --no-fund --prefer-offline --no-progress --legacy-peer-deps && \
     npm cache clean --force && \
     rm -rf /root/.npm
 
@@ -33,32 +32,36 @@ RUN npm config set registry https://registry.npmjs.org/ && \
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+# Configurar variáveis de ambiente para build otimizado
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+
+# Copiar apenas arquivos essenciais primeiro para melhorar cache
+COPY next.config.js tsconfig.json jsconfig.json ./
+COPY public ./public
+COPY src ./src
+
 # Copiar dependências do stage anterior
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Configurar variáveis de ambiente para build otimizado
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=512"
-
 # Build com configurações de memória limitada e otimizações de performance
-RUN NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 npm run build -- --no-lint && \
+RUN NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 npm run build:fast -- --no-lint && \
     find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
 
 # Stage 3: Runtime ultra-leve com Alpine mínimo
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Remover pacotes desnecessários e limpar cache
-RUN apk update && \
-    apk add --no-cache curl && \
+# Instalar apenas o essencial para produção e limpar cache
+RUN apk add --no-cache curl && \
     rm -rf /var/cache/apk/* /tmp/*
 
 # Configurações de segurança e performance
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=256 --no-warnings"
+ENV NODE_OPTIONS="--max-old-space-size=256 --no-warnings --enable-source-maps=false"
 ENV PORT=3000
 
 # Criar usuário não-root para segurança

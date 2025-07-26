@@ -1,0 +1,33 @@
+# Stage 1: Dependências com otimizações avançadas
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat curl && rm -rf /var/cache/apk/*
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY package*.json .npmrc.ci ./
+RUN mv .npmrc.ci .npmrc && npm ci --omit=dev --prefer-offline --no-progress --legacy-peer-deps && npm cache clean --force
+
+# Stage 2: Build otimizado
+FROM node:18-alpine AS builder
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build:fast -- --no-lint && find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
+
+# Stage 3: Runtime ultra-leve
+FROM node:18-alpine AS runner
+WORKDIR /app
+RUN apk add --no-cache curl && rm -rf /var/cache/apk/*
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
+EXPOSE 3000
+CMD ["node", "server.js"]

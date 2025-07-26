@@ -1,5 +1,5 @@
 # ==============================================================================
-# DOCKERFILE ULTRA-OTIMIZADO PARA ORACLE CLOUD - lUCA CAPELOCI
+# DOCKERFILE ULTRA-OTIMIZADO PARA ORACLE CLOUD - lUCA CAPELOCI  
 # ==============================================================================
 # Multi-stage build otimizado para reduzir uso de CPU/RAM
 # Compatível com Oracle Cloud Always Free Tier
@@ -28,19 +28,10 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
-# ✅ Corrigido: copiar apenas arquivos que realmente existem
-COPY next.config.js ./
-COPY public ./public
-COPY src ./src
-
-# Copiar tsconfig.json somente se existir
-# (isso evita erro se faltar)
-COPY tsconfig.json* ./  || true
-
-# Dependências do stage anterior
-COPY --from=deps /app/node_modules ./node_modules
+# ✅ Agora copiamos tudo de uma vez (não dá erro se faltar algo)
 COPY . .
 
+# Build com configurações de memória limitada e otimizações de performance
 RUN NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 npm run build:fast -- --no-lint && \
     find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
 
@@ -58,6 +49,7 @@ ENV PORT=3000
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
+# Copiar apenas os arquivos realmente necessários para produção
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

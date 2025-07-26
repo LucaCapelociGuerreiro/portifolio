@@ -1,5 +1,5 @@
 # ==============================================================================
-# DOCKERFILE ULTRA-OTIMIZADO PARA ORACLE CLOUD - ANALISTA DEVOPS SÊNIOR
+# DOCKERFILE ULTRA-OTIMIZADO PARA ORACLE CLOUD - LUCA CAPELOCI
 # ==============================================================================
 # Multi-stage build otimizado para reduzir uso de CPU/RAM
 # Compatível com Oracle Cloud Always Free Tier
@@ -18,7 +18,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copiar apenas os arquivos de dependências para aproveitar o cache
-COPY package*.json .npmrc ./
+COPY package*.json .npmrc ./  
 
 # Criar .npmrc otimizado para acelerar instalação
 RUN echo "registry=https://registry.npmjs.org/\nfetch-timeout=300000\nfetch-retry-mintimeout=20000\nfetch-retry-maxtimeout=120000\nnetwork-concurrency=8\ncache-min=3600\nprefer-offline=true\nfund=false\naudit=false" > .npmrc
@@ -28,6 +28,7 @@ RUN npm ci --omit=dev --no-audit --no-fund --prefer-offline --no-progress --lega
     npm cache clean --force && \
     rm -rf /root/.npm
 
+# ==============================================================================
 # Stage 2: Build otimizado com limitação de memória
 FROM node:18-alpine AS builder
 WORKDIR /app
@@ -38,7 +39,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 # Copiar apenas arquivos essenciais primeiro para melhorar cache
-COPY next.config.js tsconfig.json jsconfig.json ./
+# 🔥 Removido o jsconfig.json (que não existe no repositório)
+COPY next.config.js tsconfig.json ./
 COPY public ./public
 COPY src ./src
 
@@ -50,6 +52,7 @@ COPY . .
 RUN NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 npm run build:fast -- --no-lint && \
     find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
 
+# ==============================================================================
 # Stage 3: Runtime ultra-leve com Alpine mínimo
 FROM node:18-alpine AS runner
 WORKDIR /app

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   output: 'standalone',
   
@@ -32,24 +34,18 @@ const nextConfig = {
       child_process: false,
       perf_hooks: false,
     };
-    
+
+    // Adicionando alias para a pasta src
+    config.resolve.alias['@'] = path.resolve(__dirname, 'app/src'); // Caminho absoluto fornecido
+
     // Reduzir tamanho do bundle
     config.optimization = {
       ...config.optimization,
       minimize: true,
     };
-    
+
     return config;
   },
 };
 
-// next.config.js
-const path = require('path');
-
-module.exports = {
-  webpack(config) {
-    config.resolve.alias['@'] = path.resolve('/home/lucacg/portifolio/portifolio/app/src'); // Caminho absoluto fornecido
-    return config;
-  },
-};
-
+module.exports = nextConfig;

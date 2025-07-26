@@ -134,3 +134,7 @@ test/
 
 # New additions
 .env*
+infra/
+node_modules
+npm-debug.log
+Dockerfile.ci

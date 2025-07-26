@@ -24,9 +24,7 @@ COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 
 # ✅ Agora o Next.js está disponível para buildar
-RUN npm run build:fast -- --no-lint && \
-    find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
-
+RUN npm run build
 
 # ================================================================
 # Stage 3: Runtime (apenas artefatos finais)

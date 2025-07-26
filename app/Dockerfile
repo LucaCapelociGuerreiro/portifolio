@@ -1,26 +1,17 @@
-# ==============================================================================
-# DOCKERFILE ULTRA-OTIMIZADO PARA ORACLE CLOUD - lUCA CAPELOCI  
-# ==============================================================================
-# Multi-stage build otimizado para reduzir uso de CPU/RAM
-# Compatível com Oracle Cloud Always Free Tier
-
-# Stage 1: Dependências
+# ================================================================
+# Stage 1: Instala TODAS as dependências (incluindo dev)
+# ================================================================
 FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat curl && rm -rf /var/cache/apk/*
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
 COPY package*.json .npmrc ./
-RUN echo "registry=https://registry.npmjs.org/\nfetch-timeout=300000\nfetch-retry-mintimeout=20000\nfetch-retry-maxtimeout=120000\nnetwork-concurrency=8\ncache-min=3600\nprefer-offline=true\nfund=false\naudit=false" > .npmrc
+# ✅ Instalar TUDO (incluindo devDependencies)
+RUN npm ci --legacy-peer-deps
 
-RUN npm ci --omit=dev --no-audit --no-fund --prefer-offline --no-progress --legacy-peer-deps && \
-    npm cache clean --force && \
-    rm -rf /root/.npm
-
-# ==============================================================================
-# Stage 2: Build
+# ================================================================
+# Stage 2: Build do Next.js
+# ================================================================
 FROM node:18-alpine AS builder
 WORKDIR /app
 
@@ -28,15 +19,17 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 
-# ✅ Agora copiamos tudo de uma vez (não dá erro se faltar algo)
 COPY . .
+# ✅ Copiar node_modules com dev + prod
+COPY --from=deps /app/node_modules ./node_modules
 
-# Build com configurações de memória limitada e otimizações de performance
-RUN NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 npm run build:fast -- --no-lint && \
+# ✅ Agora o Next.js está disponível para buildar
+RUN npm run build:fast -- --no-lint && \
     find .next \( -name "*.map" -o -name "*.d.ts" \) -type f -delete
 
-# ==============================================================================
-# Stage 3: Runtime
+# ================================================================
+# Stage 3: Runtime (apenas artefatos finais)
+# ================================================================
 FROM node:18-alpine AS runner
 WORKDIR /app
 
@@ -49,13 +42,12 @@ ENV PORT=3000
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
-# Copiar apenas os arquivos realmente necessários para produção
+# ✅ Copiar apenas arquivos necessários para produção
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
-
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

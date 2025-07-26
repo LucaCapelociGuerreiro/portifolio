@@ -7,7 +7,7 @@ const nextConfig = {
     unoptimized: true,
   },
   
-  // Ignorar verificações durante build para acelerar
+  // Ignorar verificações durante build para acelerar.
   eslint: {
     ignoreDuringBuilds: true,
   },

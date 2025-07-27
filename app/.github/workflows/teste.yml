@@ -1,7 +1,7 @@
 # ==============================================================================
 # GITHUB ACTIONS CI/CD PIPELINE - PORTFOLIO ORACLE CLOUD
 # ==============================================================================
-# Pipeline completo de CI/CD para deploy automatizado no Oracle Cloud
+# Pipeline completo de CI/CD para deploy automatizado no Oracle Cloud.
 # Analista DevOps Sênior - Automação e Deploy Direto
 
 name: 'Deploy Portfolio to Oracle Cloud'

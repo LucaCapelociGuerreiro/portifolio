@@ -117,22 +117,22 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: 'meu-portifolio/package-lock.json'
+        cache-dependency-path: 'meu-portifolio/app/package-lock.json'
 
     - name: 📦 Install dependencies
-      working-directory: ./meu-portifolio
+      working-directory: ./meu-portifolio/app
       run: |
         npm ci --legacy-peer-deps
         npm audit --audit-level=high
 
     - name: 🧪 Run tests
-      working-directory: ./meu-portifolio
+      working-directory: ./meu-portifolio/app
       run: |
         npm run test -- --coverage --watchAll=false
         npm run lint
 
     - name: 🏗️ Build application
-      working-directory: ./meu-portifolio
+      working-directory: ./meu-portifolio/app
       env:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: 1
@@ -143,7 +143,7 @@ jobs:
       uses: codecov/codecov-action@v4
       if: matrix.node-version == '18'
       with:
-        file: ./meu-portifolio/coverage/lcov.info
+        file: ./meu-portifolio/app/coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
 
@@ -193,8 +193,8 @@ jobs:
       id: build
       uses: docker/build-push-action@v5
       with:
-        context: ./meu-portifolio
-        file: ./meu-portifolio/Dockerfile
+        context: ./meu-portifolio/app
+        file: ./meu-portifolio/app/Dockerfile
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -280,12 +280,12 @@ jobs:
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3.raw" \
                -o docker-compose.yml \
-               "https://api.github.com/repos/${{ github.repository }}/contents/meu-portifolio/docker-compose.yml"
+               "https://api.github.com/repos/${{ github.repository }}/contents/meu-portifolio/app/docker-compose.yml"
           
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3.raw" \
                -o nginx.conf \
-               "https://api.github.com/repos/${{ github.repository }}/contents/meu-portifolio/nginx.conf"
+               "https://api.github.com/repos/${{ github.repository }}/contents/meu-portifolio/app/nginx.conf"
           
           echo "🛑 Parando containers antigos..."
           docker-compose down --remove-orphans || true

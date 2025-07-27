@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Skills from '@/app/components/Skills';
-import Experience from '@/app/components/Experience';
-import Contact from '@/app/components/Contact';
+import Skills from './components/Skills';
+import Experience from './components/Experience';
+import Contact from './components/Contact';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Projects from './components/Projects';

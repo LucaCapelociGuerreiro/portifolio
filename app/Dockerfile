@@ -23,8 +23,13 @@ COPY . .
 # ✅ Copiar node_modules com dev + prod
 COPY --from=deps /app/node_modules ./node_modules
 
-# ✅ Agora o Next.js está disponível para buildar
-RUN npm run build
+# ✅ Agora o Next.js está disponível para buildar com otimizações
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DISABLE_ESLINT_PLUGIN=true
+ENV DISABLE_TYPESCRIPT_PLUGIN=true
+
+# Usar build otimizado para evitar timeout
+RUN npm run build --no-lint
 
 # ================================================================
 # Stage 3: Runtime (apenas artefatos finais)

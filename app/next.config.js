@@ -36,7 +36,7 @@ const nextConfig = {
     };
 
     // Adicionando alias para a pasta src
-    config.resolve.alias['@'] = path.resolve(__dirname, 'app/src'); // Caminho absoluto fornecido
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src'); // Caminho absoluto corrigido
 
     // Reduzir tamanho do bundle
     config.optimization = {

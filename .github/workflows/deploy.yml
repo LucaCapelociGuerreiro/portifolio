@@ -114,9 +114,7 @@ jobs:
     - name: 🟢 Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: 'portfolio/app/package-lock.json'   # ✅ corrigido
+        node-version: ${{ matrix.node-version }}   # ✅ sem cache aqui
 
     - name: 📦 Install dependencies
       working-directory: ./portfolio/app

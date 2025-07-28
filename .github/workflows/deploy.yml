@@ -159,7 +159,7 @@ jobs:
 
       - name: 🏗️ Build and push Docker image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./portifolio/app
           file: ./portifolio/app/Dockerfile
